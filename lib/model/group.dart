@@ -16,7 +16,8 @@ class Group extends ChangeNotifier {
         : id = json['id'],
         name = json['name'],
         private = json['private'],
-        contacts = json['contacts'];
+        contacts = json['contacts'],
+        owners = json['owners'];
 
     Map<String, dynamic> serialize () => {
             'id' : id,
