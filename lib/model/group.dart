@@ -2,17 +2,17 @@ import 'package:flutter/widgets.dart';
 import 'user.dart';
 import 'package:uuid/uuid.dart';
 
-class Group extends ChangeNotifier {
+class ContactGroupModel extends ChangeNotifier {
     final String id;
     final String name;
     final bool private;
     final List <ApplicationUser> contacts;
     List<ApplicationUser> owners;
 
-    Group ({required this.name, this.contacts= const [], required this.owners, required this.private})
+    ContactGroupModel ({required this.name, this.contacts= const [], required this.owners, required this.private})
             : id = const Uuid().toString();
    
-    Group.deserializeFromJson (Map<String, dynamic> json)
+    ContactGroupModel.deserializeFromJson (Map<String, dynamic> json)
         : id = json['id'],
         name = json['name'],
         private = json['private'],
