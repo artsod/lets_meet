@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
+import 'package:lets_meet/meetingInProgress.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as mt;
 import 'organizeMeeting.dart';
 // Uncomment lines 3 and 6 to view the visual layout at runtime.
@@ -19,11 +20,14 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
+  late PlacesDetailsResponse staticPlace; //####To jest tylko na potrzeby statycznego przypisania miejsca. Jak zrobimy właściwe wywołanie spoktania w toku, można to usunąć
+
   late GoogleMapController mapController;
 
   final sqrt2 = 1.4142135623730951;
   final _places = GoogleMapsPlaces(apiKey: 'AIzaSyDWBhV1GqMnWxUjMDHiGHLNqvuthU8nUcE');
   final Set<Marker> _markers = {};
+  bool _isMeetingInProgress = true; //Do ustawienia dynamicznie
 
   CameraPosition _currentCameraPosition = CameraPosition(
     target: LatLng(51.1, 17.0333),
@@ -109,9 +113,8 @@ class _MapScreenState extends State<MapScreen> {
                                 onPressed: () async => {
                                   placeDetails = await _places.getDetailsByPlaceId(result.placeId),
                                   if (response.status == 'OK') {
-                                    print('-----------------------'),
-                                    print(placeDetails.result.photos.first.photoReference),
-                                    print(placeDetails.result.photos.length),
+                                    print('--------------'),
+                                    print(placeDetails.result.placeId),
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
@@ -121,7 +124,7 @@ class _MapScreenState extends State<MapScreen> {
                                     ),
                                   }
                                 },
-                                child: const Text('Organize meeting here', style: TextStyle(fontSize: 10))
+                                child: const Text('Let\'s meet here', style: TextStyle(fontSize: 10))
                               ),
                             ),
                             const SizedBox(width: 20),
@@ -158,105 +161,155 @@ class _MapScreenState extends State<MapScreen> {
     return MaterialApp(
       home: Scaffold(
         body: Stack(
-        children: <Widget>[
-            //GoogleMap
-            GoogleMap(
-              onMapCreated: _onMapCreated,
-              markers: _markers,
-              onCameraMove: (CameraPosition position) {
-                _currentCameraPosition = position;
-              },
-              onCameraIdle: () {
-                setState(() {
-                  _getPlaces();
-                });
-              },
-              onTap: _onMapTapped,
-              zoomControlsEnabled: false,
-              initialCameraPosition: CameraPosition(
-                target: _currentCameraPosition.target,
-                zoom: 11.0,
+            children: <Widget>[
+              //GoogleMap
+              GoogleMap(
+                onMapCreated: _onMapCreated,
+                markers: _markers,
+                onCameraMove: (CameraPosition position) {
+                  _currentCameraPosition = position;
+                },
+                onCameraIdle: () {
+                  setState(() {
+                    _getPlaces();
+                  });
+                },
+                onTap: _onMapTapped,
+                zoomControlsEnabled: false,
+                initialCameraPosition: CameraPosition(
+                  target: _currentCameraPosition.target,
+                  zoom: 11.0,
+                ),
               ),
-            ),
-            //Hamburger menu
-            Builder(
-              builder: (BuildContext context) {
-                return Positioned(
-                  top:50,
-                  left:20,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade700,
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.menu,
-                        color: Colors.white,
+              //Hamburger menu
+              Builder(
+                builder: (BuildContext context) {
+                  return Positioned(
+                    top:50,
+                    left:20,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade700,
+                        shape: BoxShape.circle,
                       ),
-                      onPressed: () { Scaffold.of(context).openDrawer(); },
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.menu,
+                          color: Colors.white,
+                        ),
+                        onPressed: () { Scaffold.of(context).openDrawer(); },
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-            //Bottom menu
-            Builder( //Create bottom menu widget
-              builder: (BuildContext context) {
-                return Positioned(
-                  left:30,
-                  right:30,
-                  bottom: 20,
-                  height: 100,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade100,
-                      shape: BoxShape.rectangle,
-                      borderRadius: BorderRadius.circular(20.0),
-                  ),
-                    child: GridView.count(
-                      primary: false,
-                      padding: const EdgeInsets.all(10),
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                      crossAxisCount: 2,
-                      childAspectRatio: 4.7,
-                      children: [
-                        ElevatedButton(
-                          style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
+                  );
+                },
+              ),
+              //Bottom menu
+              Builder( //Create bottom menu widget
+                builder: (BuildContext context) {
+                  return Positioned(
+                    left:30,
+                    right:30,
+                    bottom: 20,
+                    height: 100,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade100,
+                        shape: BoxShape.rectangle,
+                        borderRadius: BorderRadius.circular(20.0),
+                      ),
+                      child: GridView.count(
+                        primary: false,
+                        padding: const EdgeInsets.all(10),
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        crossAxisCount: 2,
+                        childAspectRatio: 4.7,
+                        children: [
+                          ElevatedButton(
+                              style: ButtonStyle(
+                                backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
+                              ),
+                              onPressed: () {},
+                              child: const Text('Find meetings nearby', style: TextStyle(fontSize: 10))
                           ),
-                          onPressed: () {},
-                          child: const Text('Find meetings nearby', style: TextStyle(fontSize: 10))
-                        ),
-                        ElevatedButton(
-                            style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
-                            ),
-                            onPressed: () {},
-                            child: const Text('Find popular places nearby', style: TextStyle(fontSize: 10))
-                        ),
-                        ElevatedButton(
-                            style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
-                            ),
-                            onPressed: () {},
-                            child: const Text('Search for playgrounds', style: TextStyle(fontSize: 10))
-                        ),
-                        ElevatedButton(
-                            style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
-                            ),
-                            onPressed: () {},
-                            child: const Text('Search on the map', style: TextStyle(fontSize: 10))
-                        ),
-                      ],
+                          ElevatedButton(
+                              style: ButtonStyle(
+                                backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
+                              ),
+                              onPressed: () {},
+                              child: const Text('Find popular places nearby', style: TextStyle(fontSize: 10))
+                          ),
+                          ElevatedButton(
+                              style: ButtonStyle(
+                                backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
+                              ),
+                              onPressed: () {},
+                              child: const Text('Search for playgrounds', style: TextStyle(fontSize: 10))
+                          ),
+                          ElevatedButton(
+                              style: ButtonStyle(
+                                backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
+                              ),
+                              onPressed: () {},
+                              child: const Text('Search on the map', style: TextStyle(fontSize: 10))
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-          ]
+                  );
+                },
+              ),
+              //Meeting in progress widget
+              Builder( //Create meeting in progress widget
+                builder: (BuildContext context) {
+                  return Visibility(
+                    visible: _isMeetingInProgress,
+                    child: Positioned(
+                      bottom: 130,
+                      right:35,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade100,
+                          shape: BoxShape.rectangle,
+                          borderRadius: BorderRadius.circular(20.0),
+                        ),
+                        padding: const EdgeInsets.all(5),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(5),
+                              child: Text('You\'re currently in the meeting', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                            ),
+                            Container(
+                            decoration: BoxDecoration(
+                                color: Colors.orange.shade700,
+                                shape: BoxShape.circle,
+                              ),
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.access_time_filled,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () async => {
+                                  staticPlace=await _places.getDetailsByPlaceId('ChIJ-eVnDB7oD0cRTobTaBciLuo'), //Do usunięcia po wlaściwej implementacji tego wywołania ze spotkaniem w toku
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          MeetingInProgress(staticPlace.result),
+                                    ),
+                                  ),
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ]
         ),
         drawer: Drawer(
           child: ListView(

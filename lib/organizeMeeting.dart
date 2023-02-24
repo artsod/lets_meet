@@ -16,7 +16,7 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
 
   final PlaceDetails place;
   final Color color = Colors.orange.shade700;
-  late String _startMeetingText = 'Start meeting now';
+  late String _startMeetingText = 'Let\'s meet here now';
   bool startNow=true;
   DateTime _selectedDateTime = DateTime.now();
 
@@ -71,9 +71,9 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
             setState(() {
               startNow = value;
               if (value == true) {
-                _startMeetingText='Start meeting now';
+                _startMeetingText='Let\'s meet here now';
               } else {
-                _startMeetingText='Start meeting later';
+                _startMeetingText='Let\'s meet here later';
               }
             });
           },
