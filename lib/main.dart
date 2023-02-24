@@ -1,115 +1,307 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_webservice/places.dart';
+import 'package:maps_toolkit/maps_toolkit.dart' as mt;
+import 'organizeMeeting.dart';
+// Uncomment lines 3 and 6 to view the visual layout at runtime.
+// import 'package:flutter/rendering.dart' show debugPaintSizeEnabled;
 
 void main() {
-  runApp(const MyApp());
+  // debugPaintSizeEnabled = true;
+  runApp(MaterialApp(
+    home: MapScreen(),
+  ));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
+class MapScreen extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
+  _MapScreenState createState() => _MapScreenState();
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class _MapScreenState extends State<MapScreen> {
+  late GoogleMapController mapController;
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
+  final sqrt2 = 1.4142135623730951;
+  final _places = GoogleMapsPlaces(apiKey: 'AIzaSyDWBhV1GqMnWxUjMDHiGHLNqvuthU8nUcE');
+  final Set<Marker> _markers = {};
 
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
+  CameraPosition _currentCameraPosition = CameraPosition(
+    target: LatLng(51.1, 17.0333),
+    zoom: 12, // Default zoom level
+  );
 
-  final String title;
+  LatLng _tappedLocation = LatLng(0,0);
 
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
+  void _onMapTapped(LatLng location) {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _tappedLocation = location;
+      mapController.animateCamera(CameraUpdate.newLatLng(location));
     });
   }
 
+  num calculateRadius(LatLngBounds bounds) {
+    final topLeftCorner = mt.LatLng(bounds.northeast.latitude,bounds.southwest.longitude);
+    final topRightCorner = mt.LatLng(bounds.northeast.latitude,bounds.northeast.longitude);
+    final distance = mt.SphericalUtil.computeDistanceBetween(
+      topLeftCorner,topRightCorner
+    );
+    return distance/3;
+  }
+
+  Future<void> _getPlaces() async {
+
+    late PlacesDetailsResponse placeDetails;
+
+    // Get the current visible region of the map
+    final LatLngBounds visibleRegion = await mapController.getVisibleRegion();
+
+    // Calculate the radius of the visible region in meters
+    final num radius = calculateRadius(visibleRegion);
+
+    // Search for places of interest near the center of the map
+    PlacesSearchResponse response = await _places.searchNearbyWithRadius(
+      Location(lat: _currentCameraPosition.target.latitude, lng: _currentCameraPosition.target.longitude),
+      radius.toInt(),
+      type: "point_of_interest"
+    );
+
+    if (response.status == 'OK') {
+      List<PlacesSearchResult> results = response.results;
+
+      // Add markers for each place of interest to the map
+      setState(() {
+        _markers.clear();
+        for (PlacesSearchResult result in results) {
+          if (result.geometry?.location != null) { // Add null check for geometry and location
+            _markers.add(Marker(
+              markerId: MarkerId(result.placeId),
+              position: LatLng(result.geometry!.location!.lat, result.geometry!.location!.lng), // Add non-null assertion operator here
+              infoWindow: InfoWindow(
+                title: result.name,
+                snippet: result.vicinity,
+              ),
+
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Colors.orange.shade100,
+                  builder: (BuildContext context) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+
+                      children: <Widget>[
+                        ListTile(
+                          leading: CircleAvatar(
+                            backgroundImage: NetworkImage(result.icon!),
+                          ),
+                          title: Text(result.name),
+                          subtitle: Text(result.vicinity ?? ''),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: ElevatedButton(
+                                style: ButtonStyle(
+                                  backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
+                                ),
+                                onPressed: () async => {
+                                  placeDetails = await _places.getDetailsByPlaceId(result.placeId),
+                                  if (response.status == 'OK') {
+                                    print('-----------------------'),
+                                    print(placeDetails.result.photos.first.photoReference),
+                                    print(placeDetails.result.photos.length),
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            OrganizeMeeting(placeDetails.result),
+                                      ),
+                                    ),
+                                  }
+                                },
+                                child: const Text('Organize meeting here', style: TextStyle(fontSize: 10))
+                              ),
+                            ),
+                            const SizedBox(width: 20),
+                            Expanded(child:
+                              ElevatedButton(
+                                style: ButtonStyle(
+                                  backgroundColor: MaterialStateProperty.all<Color>(Colors.grey),
+                                ),
+                                onPressed: () {Navigator.pop(context);},
+                                child: const Text('Cancel', style: TextStyle(fontSize: 10))
+                              ),
+                            ),
+                            const SizedBox(width: 20),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ));
+          }
+        }
+      });
+    }
+  }
+
+  void _onMapCreated(GoogleMapController controller) {
+    mapController = controller;
+  }
+
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+    return MaterialApp(
+      home: Scaffold(
+        body: Stack(
+        children: <Widget>[
+            //GoogleMap
+            GoogleMap(
+              onMapCreated: _onMapCreated,
+              markers: _markers,
+              onCameraMove: (CameraPosition position) {
+                _currentCameraPosition = position;
+              },
+              onCameraIdle: () {
+                setState(() {
+                  _getPlaces();
+                });
+              },
+              onTap: _onMapTapped,
+              zoomControlsEnabled: false,
+              initialCameraPosition: CameraPosition(
+                target: _currentCameraPosition.target,
+                zoom: 11.0,
+              ),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+            //Hamburger menu
+            Builder(
+              builder: (BuildContext context) {
+                return Positioned(
+                  top:50,
+                  left:20,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade700,
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.menu,
+                        color: Colors.white,
+                      ),
+                      onPressed: () { Scaffold.of(context).openDrawer(); },
+                    ),
+                  ),
+                );
+              },
             ),
-          ],
+            //Bottom menu
+            Builder( //Create bottom menu widget
+              builder: (BuildContext context) {
+                return Positioned(
+                  left:30,
+                  right:30,
+                  bottom: 20,
+                  height: 100,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade100,
+                      shape: BoxShape.rectangle,
+                      borderRadius: BorderRadius.circular(20.0),
+                  ),
+                    child: GridView.count(
+                      primary: false,
+                      padding: const EdgeInsets.all(10),
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      crossAxisCount: 2,
+                      childAspectRatio: 4.7,
+                      children: [
+                        ElevatedButton(
+                          style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
+                          ),
+                          onPressed: () {},
+                          child: const Text('Find meetings nearby', style: TextStyle(fontSize: 10))
+                        ),
+                        ElevatedButton(
+                            style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
+                            ),
+                            onPressed: () {},
+                            child: const Text('Find popular places nearby', style: TextStyle(fontSize: 10))
+                        ),
+                        ElevatedButton(
+                            style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
+                            ),
+                            onPressed: () {},
+                            child: const Text('Search for playgrounds', style: TextStyle(fontSize: 10))
+                        ),
+                        ElevatedButton(
+                            style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
+                            ),
+                            onPressed: () {},
+                            child: const Text('Search on the map', style: TextStyle(fontSize: 10))
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ]
         ),
+        drawer: Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: <Widget>[
+              DrawerHeader(
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade700,
+                ),
+                child: const Text("Hi Marcin"),
+              ),
+              ListTile(
+                title: const Text("Create meeting"),
+                onTap: () {
+                // handle item 1 press
+                },
+              ),
+              ListTile(
+                title: const Text("Join meeting"),
+                onTap: () {
+                // handle item 2 press
+                },
+              ),
+              ListTile(
+                title: const Text("Manage contacts"),
+                onTap: () {
+                  // handle item 2 press
+                },
+              ),
+              ListTile(
+                title: const Text("Settings"),
+                onTap: () {
+                  // handle item 2 press
+                },
+              ),
+              ListTile(
+                title: const Text("Log out"),
+                onTap: () {
+                  // handle item 2 press
+                },
+              ),
+            ],
+          ),
+        )
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
