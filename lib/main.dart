@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
-import 'package:lets_meet/meetingInProgress.dart';
+import 'package:lets_meet/editMeeting.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as mt;
 import 'organizeMeeting.dart';
 // Uncomment lines 3 and 6 to view the visual layout at runtime.
@@ -296,7 +296,7 @@ class _MapScreenState extends State<MapScreen> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
-                                          MeetingInProgress(staticPlace.result),
+                                          EditMeeting(staticPlace.result,true,'You\'re currently in the meeting'),
                                     ),
                                   ),
                                 },

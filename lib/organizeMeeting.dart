@@ -57,7 +57,7 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'Start meeting now?',
+          'Are you here now?',
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w400,
@@ -83,18 +83,18 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
 
     Widget timeSection = Visibility(
       visible: !startNow,
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Text('Select when you want the meeting to start',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: color,
-                ),
+          Container(
+            width: 170,
+            child: Text('Select when will you be here',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: color,
               ),
-            ]
+            ),
           ),
           DateTimePicker(
             onChanged: (dateTime) {
@@ -105,6 +105,20 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
           ),
         ],
       ),
+    );
+
+    Widget durationSection = Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text('How long do you plan to be here?',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            color: color,
+          ),
+        ),
+        DurationPicker(),
+      ],
     );
 
     Widget contactsSection = Column(
@@ -174,8 +188,7 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Image.network('https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&maxheight=240&photo_reference=${place.photos.first.photoReference}&key=AIzaSyDWBhV1GqMnWxUjMDHiGHLNqvuthU8nUcE',
-            width:600,
+          Image.network('https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&photo_reference=${place.photos.first.photoReference}&key=AIzaSyDWBhV1GqMnWxUjMDHiGHLNqvuthU8nUcE',
             height:240,
                 fit: BoxFit.cover,
           ),
@@ -186,6 +199,7 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
                 titleSection,
                 switchSection,
                 timeSection,
+                durationSection,
                 contactsSection,
                 buttonSection,
               ],
@@ -222,10 +236,10 @@ class _DateTimePickerState extends State<DateTimePicker> {
     return InkWell(
       onTap: _showDateTimePicker,
       child: Container(
-        padding: EdgeInsets.all(12),
+        padding: EdgeInsets.all(5),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.grey),
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           children: [
@@ -306,5 +320,53 @@ class _DateTimePickerState extends State<DateTimePicker> {
   String _formatDateTime(DateTime dateTime) {
     //return DateFormat.yMd(myLocale.languageCode).format(now) //Implement later
     return DateFormat('yyyy-MM-dd HH:mm').format(dateTime);
+  }
+}
+
+//#Wydzielić do osobnej klasy
+class DurationPicker extends StatefulWidget {
+  @override
+  _DurationPickerState createState() => _DurationPickerState();
+}
+
+//This duration picker isn't perfect, but for now it's ok. Change it later (especially to select from something other than clock)
+class _DurationPickerState extends State<DurationPicker> {
+  Duration _duration = Duration(hours: 0, minutes: 0);
+
+  Future<void> _selectDuration(BuildContext context) async {
+    final TimeOfDay? time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: _duration.inHours, minute: _duration.inMinutes % 60),
+    );
+
+    if (time != null) {
+      setState(() {
+        _duration = Duration(hours: time.hour, minutes: time.minute);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _selectDuration(context),
+      child: Container(
+        padding: EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '${_duration.inHours.remainder(24).toString().padLeft(2, '0')}:${(_duration.inMinutes.remainder(60)).toString().padLeft(2, '0')}',
+              style: TextStyle(fontSize: 16),
+            ),
+            Icon(Icons.arrow_drop_down),
+          ],
+        ),
+      ),
+    );
   }
 }
