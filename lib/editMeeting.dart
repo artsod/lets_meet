@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:intl/intl.dart';
+import 'durationPicker.dart';
 
 class EditMeeting extends StatefulWidget {
   final PlaceDetails place;
@@ -18,7 +19,8 @@ class _EditMeetingState extends State<EditMeeting> {
   PlaceDetails place;
   final bool _meetingStarted;
   final String _headerText;
-  Duration _duration = Duration(hours: 2, minutes: 30); //#will be dynamic
+  Duration _duration = Duration();
+  DurationPicker durationPicker = DurationPicker();
   final Color color = Colors.orange.shade700;
   final DateTime _selectedDateTime = DateTime.now();
 
@@ -96,29 +98,26 @@ class _EditMeetingState extends State<EditMeeting> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          SizedBox(
-            width:160,
-            child: Text('Is scheduled to last for:',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: color,
-              ),
+          Text('Is scheduled to last for: ',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: color,
             ),
           ),
-          //#Dopracować wygląd i działanie
-          DurationPicker(),
-          /*Text('${_duration.inHours.remainder(24).toString().padLeft(2, '0')}:${(_duration.inMinutes.remainder(60)).toString().padLeft(2, '0')}',
+          Text('${_duration.inHours.toString().padLeft(2)}hrs ${_duration.inMinutes.remainder(60).toString().padLeft(2, '0')}min',
             style: const TextStyle(
-              fontSize: 12
-            )
-          ),*/
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
           ElevatedButton(
               style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.all<Color>(color),
               ),
-              onPressed: () => {
-
+              onPressed: () async => {
+                _duration = await durationPicker.selectDuration(context),
+                setState(() {})
               },
               child: const Text('Change', style: TextStyle(fontSize: 10))
           ),
@@ -211,7 +210,7 @@ class _EditMeetingState extends State<EditMeeting> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Image.network('https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&maxheight=240&photo_reference=${place.photos.first.photoReference}&key=AIzaSyDWBhV1GqMnWxUjMDHiGHLNqvuthU8nUcE',
+          Image.network('https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&photo_reference=${place.photos.first.photoReference}&key=AIzaSyDWBhV1GqMnWxUjMDHiGHLNqvuthU8nUcE',
             width:600,
             height:240,
                 fit: BoxFit.cover,
@@ -230,54 +229,6 @@ class _EditMeetingState extends State<EditMeeting> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-//#Wydzielić do osobnej klasy
-class DurationPicker extends StatefulWidget {
-  @override
-  _DurationPickerState createState() => _DurationPickerState();
-}
-
-//This duration picker isn't perfect, but for now it's ok. Change it later (especially to select from something other than clock)
-class _DurationPickerState extends State<DurationPicker> {
-  Duration _duration = Duration(hours: 2, minutes: 30);
-
-  Future<void> _selectDuration(BuildContext context) async {
-    final TimeOfDay? time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(hour: _duration.inHours, minute: _duration.inMinutes % 60),
-    );
-
-    if (time != null) {
-      setState(() {
-        _duration = Duration(hours: time.hour, minutes: time.minute);
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _selectDuration(context),
-      child: Container(
-        padding: EdgeInsets.all(5),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '${_duration.inHours.remainder(24).toString().padLeft(2, '0')}:${(_duration.inMinutes.remainder(60)).toString().padLeft(2, '0')}',
-              style: TextStyle(fontSize: 16),
-            ),
-            Icon(Icons.arrow_drop_down),
-          ],
-        ),
       ),
     );
   }

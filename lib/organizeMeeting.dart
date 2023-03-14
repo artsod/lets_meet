@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:intl/intl.dart';
+import 'durationPicker.dart';
 
 
 class OrganizeMeeting extends StatefulWidget {
@@ -19,6 +20,7 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
   late String _startMeetingText = 'Let\'s meet here now';
   bool startNow=true;
   DateTime _selectedDateTime = DateTime.now();
+  DurationPicker durationPicker = DurationPicker();
 
   _OrganizeMeetingState(this.place);
 
@@ -117,7 +119,7 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
             color: color,
           ),
         ),
-        DurationPicker(),
+        //durationPicker,
       ],
     );
 
@@ -189,6 +191,7 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Image.network('https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&photo_reference=${place.photos.first.photoReference}&key=AIzaSyDWBhV1GqMnWxUjMDHiGHLNqvuthU8nUcE',
+            width:600,
             height:240,
                 fit: BoxFit.cover,
           ),
@@ -320,53 +323,5 @@ class _DateTimePickerState extends State<DateTimePicker> {
   String _formatDateTime(DateTime dateTime) {
     //return DateFormat.yMd(myLocale.languageCode).format(now) //Implement later
     return DateFormat('yyyy-MM-dd HH:mm').format(dateTime);
-  }
-}
-
-//#Wydzielić do osobnej klasy
-class DurationPicker extends StatefulWidget {
-  @override
-  _DurationPickerState createState() => _DurationPickerState();
-}
-
-//This duration picker isn't perfect, but for now it's ok. Change it later (especially to select from something other than clock)
-class _DurationPickerState extends State<DurationPicker> {
-  Duration _duration = Duration(hours: 0, minutes: 0);
-
-  Future<void> _selectDuration(BuildContext context) async {
-    final TimeOfDay? time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(hour: _duration.inHours, minute: _duration.inMinutes % 60),
-    );
-
-    if (time != null) {
-      setState(() {
-        _duration = Duration(hours: time.hour, minutes: time.minute);
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _selectDuration(context),
-      child: Container(
-        padding: EdgeInsets.all(5),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '${_duration.inHours.remainder(24).toString().padLeft(2, '0')}:${(_duration.inMinutes.remainder(60)).toString().padLeft(2, '0')}',
-              style: TextStyle(fontSize: 16),
-            ),
-            Icon(Icons.arrow_drop_down),
-          ],
-        ),
-      ),
-    );
   }
 }
