@@ -3,16 +3,16 @@ import 'dart:io';
 //import 'package:http/http.dart' as http;
 
 class LetsMeetApiClient {
-  final String baseUrl;
+  //final String baseUrl;
 
-  LetsMeetApiClient({required this.baseUrl});
+  LetsMeetApiClient();
 
-  Future<List<dynamic>> fetchGroups() async {
+  Future<Map<String, dynamic>> fetchGroups() async {
       try {
           final file = File('data.json');
-          final contents = file.readAsStringSync();
-          final jsonData = jsonDecode(contents);
-          // Do something with the data
+          final response = file.readAsStringSync();
+          final  jsonObject= json.decode(response); 
+          return jsonObject;
       } on FileSystemException catch (e) {
           throw e.message;
       }
@@ -21,22 +21,22 @@ class LetsMeetApiClient {
 
       //if (response.statusCode == 200) {
 
-      //final jsonData = jsonDecode(response.body) as List<dynamic>;
-      //return jsonData;
+      //final jsonObject = jsonDecode(response.body) as List<dynamic>;
+      //return jsonObject;
       //} else {
       //throw Exception('Failed to fetch groups');
       //}
   }
 
 
-  Future<void> inviteUser(String groupId, String email) async {
-    final response = await http.post(Uri.parse('$baseUrl/groups/$groupId/invite'),
-        body: jsonEncode({'email': email}),
-        headers: {'Content-Type': 'application/json'});
+  //Future<void> inviteUser(String groupId, String email) async {
+  //  final response = await http.post(Uri.parse('$baseUrl/groups/$groupId/invite'),
+  //      body: jsonEncode({'email': email}),
+  //      headers: {'Content-Type': 'application/json'});
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to invite user to group');
-    }
-  }
+  //  if (response.statusCode != 200) {
+  //    throw Exception('Failed to invite user to group');
+  //  }
+  //}
 }
 

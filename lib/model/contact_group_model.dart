@@ -1,47 +1,42 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:flutter/widgets.dart';
 import 'contact_group.dart';
+import '../api/lets_meet_api_client.dart';
 
-class ContactGroupModel {
-  List<ContactGroup> _contactGroups = [];
-  bool _isLoading = false;
-  String _errorMessage = '';
+class ContactGroupModel extends ChangeNotifier {
+    final LetsMeetApiClient _apiClient = LetsMeetApiClient();
+    List<ContactGroup> _contactGroups = [];
+    bool _isLoading = false;
+    String _errorMessage = '';
 
-  List<ContactGroup> get contactGroups => _contactGroups;
-  bool get isLoading => _isLoading;
-  bool get hasError => _errorMessage.isNotEmpty;
-  String get errorMessage => _errorMessage;
+    List<ContactGroup> get contactGroups => _contactGroups;
+    bool get isLoading => _isLoading;
+    bool get hasError => _errorMessage.isNotEmpty;
+    String get errorMessage => _errorMessage;
 
-  Future<void> fetchContacts() async {
-    _isLoading = true;
-    _errorMessage = '';
+    ContactGroupModel (BuildContext context);
 
-    try {
-      // Fetch data from API
-      final response = await http.get(Uri.parse('https://your-api-url.com/contact-groups'));
+    Future<void> fetchContacts() async {
+        Map<String, dynamic> jsonObject = await _apiClient.fetchGroups();
+        try {
+            //Clear out any existing data. 
+            _contactGroups.clear();
+            final List<ContactGroup> groups = [];
 
-      // Decode the response body
-      final data = jsonDecode(response.body);
+            for (final groupJson in jsonObject.values) {
+                ContactGroup newGroup = ContactGroup.fromJson(groupJson);
+                groups.add(newGroup);
+            }
 
-      // Clear the existing contact groups
-      _contactGroups.clear();
+            // Update the contact groups and loading state
+            _contactGroups = groups;
+            _isLoading = false;
+            notifyListeners();
 
-      // Create a new list of contact groups from the response data
-      final List<ContactGroup> groups = [];
-
-      for (final groupData in data) {
-        final group = ContactGroup.fromJson(groupData);
-        groups.add(group);
-      }
-
-      // Update the contact groups and loading state
-      _contactGroups = groups;
-      _isLoading = false;
-    } catch (error) {
-      // Handle the error
-      _isLoading = false;
-      _errorMessage = error.toString();
+        } catch (error) {
+            // Handle the error
+            _isLoading = false;
+            _errorMessage = error.toString();
+        }
     }
-  }
 }
 
