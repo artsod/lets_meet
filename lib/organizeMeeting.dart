@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:intl/intl.dart';
-import 'durationPicker.dart';
 
 
 class OrganizeMeeting extends StatefulWidget {
@@ -20,9 +19,24 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
   late String _startMeetingText = 'Let\'s meet here now';
   bool startNow=true;
   DateTime _selectedDateTime = DateTime.now();
-  DurationPicker durationPicker = DurationPicker();
+  Duration _duration = const Duration();
 
   _OrganizeMeetingState(this.place);
+
+  Future<void> selectDuration(BuildContext context) async {
+    final TimeOfDay? time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: _duration.inHours, minute: _duration.inMinutes % 60),
+    );
+
+    setState(() {
+      if (time != null) {
+        _duration = Duration(hours: time.hour, minutes: time.minute);
+      } else {
+        _duration = const Duration(hours:0, minutes: 0);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +133,30 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
             color: color,
           ),
         ),
-        //durationPicker,
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              selectDuration(context);
+            });
+          },
+          child: Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${_duration.inHours.remainder(24).toString().padLeft(2, '0')}:${(_duration.inMinutes.remainder(60)).toString().padLeft(2, '0')}',
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const Icon(Icons.arrow_drop_down),
+              ],
+            ),
+          ),
+        ),
       ],
     );
 

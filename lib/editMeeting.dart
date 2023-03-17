@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:intl/intl.dart';
-import 'durationPicker.dart';
 
 class EditMeeting extends StatefulWidget {
   final PlaceDetails place;
@@ -19,14 +18,28 @@ class _EditMeetingState extends State<EditMeeting> {
   PlaceDetails place;
   final bool _meetingStarted;
   final String _headerText;
-  Duration _duration = Duration();
-  DurationPicker durationPicker = DurationPicker();
+  Duration _duration = const Duration();
   final Color color = Colors.orange.shade700;
   final DateTime _selectedDateTime = DateTime.now();
 
   String _formatDateTime(DateTime dateTime) {
     //return DateFormat.yMd(myLocale.languageCode).format(now) //Implement later
     return DateFormat('yyyy-MM-dd HH:mm').format(dateTime);
+  }
+
+  Future<void> selectDuration(BuildContext context) async {
+    final TimeOfDay? time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: _duration.inHours, minute: _duration.inMinutes % 60),
+    );
+
+    setState(() {
+      if (time != null) {
+        _duration = Duration(hours: time.hour, minutes: time.minute);
+      } else {
+        _duration = const Duration(hours:0, minutes: 0);
+      }
+    });
   }
 
   _EditMeetingState(this.place, this._meetingStarted, this._headerText);
@@ -105,21 +118,29 @@ class _EditMeetingState extends State<EditMeeting> {
               color: color,
             ),
           ),
-          Text('${_duration.inHours.toString().padLeft(2)}hrs ${_duration.inMinutes.remainder(60).toString().padLeft(2, '0')}min',
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          ElevatedButton(
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(color),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                selectDuration(context);
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(10),
               ),
-              onPressed: () async => {
-                _duration = await durationPicker.selectDuration(context),
-                setState(() {})
-              },
-              child: const Text('Change', style: TextStyle(fontSize: 10))
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${_duration.inHours.remainder(24).toString().padLeft(2, '0')}:${(_duration.inMinutes.remainder(60)).toString().padLeft(2, '0')}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const Icon(Icons.arrow_drop_down),
+                ],
+              ),
+            ),
           ),
         ],
       ),
