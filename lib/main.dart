@@ -4,14 +4,23 @@ import 'package:google_maps_webservice/places.dart';
 import 'package:lets_meet/meetingInProgress.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as mt;
 import 'organizeMeeting.dart';
+import 'package:provider/provider.dart';
+import 'model/groups_list_model.dart';
+import 'groups_list.dart';
+
 // Uncomment lines 3 and 6 to view the visual layout at runtime.
 // import 'package:flutter/rendering.dart' show debugPaintSizeEnabled;
 
 void main() {
-  // debugPaintSizeEnabled = true;
-  runApp(MaterialApp(
-    home: MapScreen(),
-  ));
+    // debugPaintSizeEnabled = true;
+    runApp(
+        ChangeNotifierProvider(
+            create: (context) => GroupsListModel(),
+            child: MaterialApp(
+                home: MapScreen(),
+            )
+        )
+    );
 }
 
 class MapScreen extends StatefulWidget {
@@ -334,10 +343,23 @@ class _MapScreenState extends State<MapScreen> {
                 },
               ),
               ListTile(
-                title: const Text("Manage contacts"),
-                onTap: () {
-                  // handle item 2 press
-                },
+                  title: const Text("Manage contacts"),
+                  onTap: () {
+                      // handle item 2 press
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) {
+                                  return Consumer<GroupsListModel>(
+                                      builder: (context, list, child) {
+                                          return GroupsList(list);
+                                      }
+                                  );
+                              }
+                          )
+                      );
+                      
+                  }
               ),
               ListTile(
                 title: const Text("Settings"),

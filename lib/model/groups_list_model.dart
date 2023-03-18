@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'contact_group.dart';
 import '../api/lets_meet_api_client.dart';
 
-class ContactGroupModel extends ChangeNotifier {
+class GroupsListModel extends ChangeNotifier {
     final LetsMeetApiClient _apiClient = LetsMeetApiClient();
     List<ContactGroup> _contactGroups = [];
     bool _isLoading = false;
@@ -13,9 +13,8 @@ class ContactGroupModel extends ChangeNotifier {
     bool get hasError => _errorMessage.isNotEmpty;
     String get errorMessage => _errorMessage;
 
-    ContactGroupModel (BuildContext context);
 
-    Future<void> fetchContacts() async {
+    Future<void> fetchGroups() async {
         Map<String, dynamic> jsonObject = await _apiClient.fetchGroups();
         try {
             //Clear out any existing data. 
