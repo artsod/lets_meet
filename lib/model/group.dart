@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+/*import 'package:flutter/widgets.dart';
 import 'user.dart';
 import 'package:uuid/uuid.dart';
 
@@ -36,5 +36,4 @@ class ContactGroupModel extends ChangeNotifier {
 
     notifyListeners();
   }
-    
-}
+}*/
