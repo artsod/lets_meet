@@ -13,6 +13,9 @@ class GroupsListModel extends ChangeNotifier {
     bool get hasError => _errorMessage.isNotEmpty;
     String get errorMessage => _errorMessage;
 
+GroupsListModel(){
+    fetchGroups;
+}
 
     Future<void> fetchGroups() async {
         Map<String, dynamic> jsonObject = await _apiClient.fetchGroups();

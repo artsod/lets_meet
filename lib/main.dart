@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
+import 'package:lets_meet/groups_screen.dart';
 import 'package:lets_meet/meetingInProgress.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as mt;
 import 'organizeMeeting.dart';
@@ -350,15 +351,10 @@ class _MapScreenState extends State<MapScreen> {
                           context,
                           MaterialPageRoute(
                               builder: (context) {
-                                  return Consumer<GroupsListModel>(
-                                      builder: (context, list, child) {
-                                          return GroupsList(list);
-                                      }
-                                  );
+                                  return GroupsScreen();
                               }
                           )
                       );
-                      
                   }
               ),
               ListTile(
