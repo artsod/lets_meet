@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:lets_meet/editMeeting.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as mt;
@@ -29,7 +30,7 @@ class _MapScreenState extends State<MapScreen> {
   final Set<Marker> _markers = {};
   bool _isMeetingInProgress = true; //Do ustawienia dynamicznie
 
-  CameraPosition _currentCameraPosition = CameraPosition(
+  CameraPosition _currentCameraPosition = const CameraPosition(
     target: LatLng(51.1, 17.0333),
     zoom: 12, // Default zoom level
   );
@@ -52,105 +53,188 @@ class _MapScreenState extends State<MapScreen> {
     return distance/3;
   }
 
-  Future<void> _getPlaces() async {
-
-    late PlacesDetailsResponse placeDetails;
-
-    // Get the current visible region of the map
-    final LatLngBounds visibleRegion = await mapController.getVisibleRegion();
-
-    // Calculate the radius of the visible region in meters
-    final num radius = calculateRadius(visibleRegion);
-
-    // Search for places of interest near the center of the map
-    PlacesSearchResponse response = await _places.searchNearbyWithRadius(
-      Location(lat: _currentCameraPosition.target.latitude, lng: _currentCameraPosition.target.longitude),
-      radius.toInt(),
-      type: "point_of_interest"
+  Future<void> _getPOI(PointOfInterest poi) async {
+    PlacesDetailsResponse response = await _places.getDetailsByPlaceId(poi.placeId);
+    late PlaceDetails poiDetails = response.result;
+    late Marker marker = Marker(
+        markerId: MarkerId(poi.placeId),
+        position: poi.position,
+        infoWindow: InfoWindow(
+            title: poi.name,
+            snippet: poiDetails.vicinity,
+        ),
     );
 
-    if (response.status == 'OK') {
-      List<PlacesSearchResult> results = response.results;
-
-      // Add markers for each place of interest to the map
-      setState(() {
-        _markers.clear();
-        for (PlacesSearchResult result in results) {
-          if (result.geometry?.location != null) { // Add null check for geometry and location
-            _markers.add(Marker(
-              markerId: MarkerId(result.placeId),
-              position: LatLng(result.geometry!.location!.lat, result.geometry!.location!.lng), // Add non-null assertion operator here
-              infoWindow: InfoWindow(
-                title: result.name,
-                snippet: result.vicinity,
-              ),
-
-              onTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  backgroundColor: Colors.orange.shade100,
-                  builder: (BuildContext context) {
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-
-                      children: <Widget>[
-                        ListTile(
-                          leading: CircleAvatar(
-                            backgroundImage: NetworkImage(result.icon!),
-                          ),
-                          title: Text(result.name),
-                          subtitle: Text(result.vicinity ?? ''),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            const SizedBox(width: 20),
-                            Expanded(
-                              child: ElevatedButton(
-                                style: ButtonStyle(
-                                  backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
-                                ),
-                                onPressed: () async => {
-                                  placeDetails = await _places.getDetailsByPlaceId(result.placeId),
-                                  if (response.status == 'OK') {
-                                    print('--------------'),
-                                    print(placeDetails.result.placeId),
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            OrganizeMeeting(placeDetails.result),
-                                      ),
-                                    ),
-                                  }
-                                },
-                                child: const Text('Let\'s meet here', style: TextStyle(fontSize: 10))
-                              ),
-                            ),
-                            const SizedBox(width: 20),
-                            Expanded(child:
-                              ElevatedButton(
-                                style: ButtonStyle(
-                                  backgroundColor: MaterialStateProperty.all<Color>(Colors.grey),
-                                ),
-                                onPressed: () {Navigator.pop(context);},
-                                child: const Text('Cancel', style: TextStyle(fontSize: 10))
-                              ),
-                            ),
-                            const SizedBox(width: 20),
-                          ],
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
-            ));
-          }
-        }
-      });
-    }
+    setState(() {
+      _markers.clear();
+      _markers.add(marker);
+      _modalOrganizeMeeting(poi, poiDetails);
+    });
   }
+
+  void _modalOrganizeMeeting (PointOfInterest poi, PlaceDetails details) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.orange.shade100,
+      builder: (BuildContext context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+
+          children: <Widget>[
+            ListTile(
+              leading: CircleAvatar(
+                backgroundImage: NetworkImage(details.icon!),
+              ),
+              title: Text(poi.name),
+              subtitle: Text(details.vicinity ?? ''),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                const SizedBox(width: 20),
+                Expanded(
+                  child: ElevatedButton(
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all<Color>(
+                            Colors.orange.shade700),
+                      ),
+                      onPressed: () async =>
+                      {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                OrganizeMeeting(details),
+                          ),
+                        ),
+                      },
+                      child: const Text('Let\'s meet here',
+                          style: TextStyle(fontSize: 10))
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(child:
+                ElevatedButton(
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all<Color>(
+                          Colors.grey),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                        'Cancel', style: TextStyle(fontSize: 10))
+                ),
+                ),
+                const SizedBox(width: 20),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+//Old method for future reference
+    Future<void> _getPlaces() async {
+
+      late PlacesDetailsResponse placeDetails;
+
+      // Get the current visible region of the map
+      final LatLngBounds visibleRegion = await mapController.getVisibleRegion();
+
+      // Calculate the radius of the visible region in meters
+      final num radius = calculateRadius(visibleRegion);
+
+      // Search for places of interest near the center of the map
+      PlacesSearchResponse response = await _places.searchNearbyWithRadius(
+          Location(lat: _currentCameraPosition.target.latitude, lng: _currentCameraPosition.target.longitude),
+          radius.toInt(),
+          type: "point_of_interest"
+      );
+
+      if (response.status == 'OK') {
+        List<PlacesSearchResult> results = response.results;
+
+        // Add markers for each place of interest to the map
+        setState(() {
+          _markers.clear();
+          for (PlacesSearchResult result in results) {
+            if (result.geometry?.location != null) { // Add null check for geometry and location
+              _markers.add(Marker(
+                markerId: MarkerId(result.placeId),
+                position: LatLng(result.geometry!.location!.lat, result.geometry!.location!.lng), // Add non-null assertion operator here
+                infoWindow: InfoWindow(
+                  title: result.name,
+                  snippet: result.vicinity,
+                ),
+
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: Colors.orange.shade100,
+                    builder: (BuildContext context) {
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+
+                        children: <Widget>[
+                          ListTile(
+                            leading: CircleAvatar(
+                              backgroundImage: NetworkImage(result.icon!),
+                            ),
+                            title: Text(result.name),
+                            subtitle: Text(result.vicinity ?? ''),
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              const SizedBox(width: 20),
+                              Expanded(
+                                child: ElevatedButton(
+                                    style: ButtonStyle(
+                                      backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
+                                    ),
+                                    onPressed: () async => {
+                                      placeDetails = await _places.getDetailsByPlaceId(result.placeId),
+                                      if (response.status == 'OK') {
+                                        print('--------------'),
+                                        print(placeDetails.result.placeId),
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                OrganizeMeeting(placeDetails.result),
+                                          ),
+                                        ),
+                                      }
+                                    },
+                                    child: const Text('Let\'s meet here', style: TextStyle(fontSize: 10))
+                                ),
+                              ),
+                              const SizedBox(width: 20),
+                              Expanded(child:
+                              ElevatedButton(
+                                  style: ButtonStyle(
+                                    backgroundColor: MaterialStateProperty.all<Color>(Colors.grey),
+                                  ),
+                                  onPressed: () {Navigator.pop(context);},
+                                  child: const Text('Cancel', style: TextStyle(fontSize: 10))
+                              ),
+                              ),
+                              const SizedBox(width: 20),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ));
+            }
+          }
+        });
+      }
+    }
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
@@ -171,10 +255,16 @@ class _MapScreenState extends State<MapScreen> {
                 },
                 onCameraIdle: () {
                   setState(() {
-                    _getPlaces();
+                    //_getPlaces();
                   });
                 },
                 onTap: _onMapTapped,
+                onPoiTap: (PointOfInterest poi) {
+                  setState(() {
+                    _onMapTapped(poi.position);
+                    _getPOI(poi);
+                  });
+                },
                 zoomControlsEnabled: false,
                 initialCameraPosition: CameraPosition(
                   target: _currentCameraPosition.target,

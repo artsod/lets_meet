@@ -32,7 +32,15 @@ dependencies:
   uuid: ^3.0.6
   flutter:
     sdk: flutter
-  google_maps_flutter: ^2.2.3
+  #google_maps_flutter: ^2.2.3
+  google_maps_flutter:
+    git:
+      url: https://github.com/riccardo-runci/google_maps_flutter.git
+      ref: main
+  google_maps_flutter_platform_interface:
+    git:
+      url: https://github.com/riccardo-runci/google_maps_flutter_platform_interface.git
+      ref: main
   google_maps_webservice: ^0.0.20-nullsafety.5
   flutter_cache_manager: 3.0.0
   maps_toolkit: 2.0.1
