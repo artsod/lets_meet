@@ -24,18 +24,18 @@ class _MapScreenState extends State<MapScreen> {
   late PlacesDetailsResponse staticPlace; //####To jest tylko na potrzeby statycznego przypisania miejsca. Jak zrobimy właściwe wywołanie spoktania w toku, można to usunąć
 
   late GoogleMapController mapController;
-
   final sqrt2 = 1.4142135623730951;
   final _places = GoogleMapsPlaces(apiKey: 'AIzaSyDWBhV1GqMnWxUjMDHiGHLNqvuthU8nUcE');
   final Set<Marker> _markers = {};
-  bool _isMeetingInProgress = true; //Do ustawienia dynamicznie
+  final bool _isMeetingInProgress = true; //Do ustawienia dynamicznie
+  final String _favouritePlaceType = 'Plac zabaw'; //Do ustawienia dynamicznie w opcjach konta
 
   CameraPosition _currentCameraPosition = const CameraPosition(
     target: LatLng(51.1, 17.0333),
     zoom: 12, // Default zoom level
   );
 
-  LatLng _tappedLocation = LatLng(0,0);
+  LatLng _tappedLocation = const LatLng(0,0);
 
   void _onMapTapped(LatLng location) {
     setState(() {
@@ -44,7 +44,7 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
-  num calculateRadius(LatLngBounds bounds) {
+  num _calculateRadius(LatLngBounds bounds) {
     final topLeftCorner = mt.LatLng(bounds.northeast.latitude,bounds.southwest.longitude);
     final topRightCorner = mt.LatLng(bounds.northeast.latitude,bounds.northeast.longitude);
     final distance = mt.SphericalUtil.computeDistanceBetween(
@@ -68,11 +68,11 @@ class _MapScreenState extends State<MapScreen> {
     setState(() {
       _markers.clear();
       _markers.add(marker);
-      _modalOrganizeMeeting(poi, poiDetails);
+      _modalOrganizeMeeting(poiDetails);
     });
   }
 
-  void _modalOrganizeMeeting (PointOfInterest poi, PlaceDetails details) {
+  void _modalOrganizeMeeting (PlaceDetails details) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.orange.shade100,
@@ -85,7 +85,7 @@ class _MapScreenState extends State<MapScreen> {
               leading: CircleAvatar(
                 backgroundImage: NetworkImage(details.icon!),
               ),
-              title: Text(poi.name),
+              title: Text(details.name),
               subtitle: Text(details.vicinity ?? ''),
             ),
             Row(
@@ -135,106 +135,130 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-//Old method for future reference
-    Future<void> _getPlaces() async {
+  Future<void> _getPlaces() async {
 
-      late PlacesDetailsResponse placeDetails;
+    late PlacesDetailsResponse placeDetailsResponse;
+    late PlaceDetails placeDetails;
 
-      // Get the current visible region of the map
-      final LatLngBounds visibleRegion = await mapController.getVisibleRegion();
+    // Get the current visible region of the map
+    final LatLngBounds visibleRegion = await mapController.getVisibleRegion();
 
-      // Calculate the radius of the visible region in meters
-      final num radius = calculateRadius(visibleRegion);
+    // Calculate the radius of the visible region in meters
+    final num radius = _calculateRadius(visibleRegion);
 
-      // Search for places of interest near the center of the map
-      PlacesSearchResponse response = await _places.searchNearbyWithRadius(
-          Location(lat: _currentCameraPosition.target.latitude, lng: _currentCameraPosition.target.longitude),
-          radius.toInt(),
-          type: "point_of_interest"
-      );
+    // Search for places of interest near the center of the map
+    PlacesSearchResponse response = await _places.searchNearbyWithRadius(
+        Location(lat: _currentCameraPosition.target.latitude, lng: _currentCameraPosition.target.longitude),
+        radius.toInt(),
+        type: "point_of_interest",
+        keyword: _favouritePlaceType,
+    );
 
-      if (response.status == 'OK') {
-        List<PlacesSearchResult> results = response.results;
+    if (response.status == 'OK') {
+      List<PlacesSearchResult> results = response.results;
 
-        // Add markers for each place of interest to the map
-        setState(() {
-          _markers.clear();
-          for (PlacesSearchResult result in results) {
-            if (result.geometry?.location != null) { // Add null check for geometry and location
-              _markers.add(Marker(
-                markerId: MarkerId(result.placeId),
-                position: LatLng(result.geometry!.location!.lat, result.geometry!.location!.lng), // Add non-null assertion operator here
-                infoWindow: InfoWindow(
-                  title: result.name,
-                  snippet: result.vicinity,
-                ),
+      // Add markers for each place of interest to the map
+      setState(() {
+        _markers.clear();
+        for (PlacesSearchResult result in results) {
+          if (result.geometry?.location != null) { // Add null check for geometry and location
+            _markers.add(Marker(
+              markerId: MarkerId(result.placeId),
+              position: LatLng(result.geometry!.location!.lat, result.geometry!.location!.lng), // Add non-null assertion operator here
+              infoWindow: InfoWindow(
+                title: result.name,
+                snippet: result.vicinity,
+              ),
 
-                onTap: () {
-                  showModalBottomSheet(
-                    context: context,
-                    backgroundColor: Colors.orange.shade100,
-                    builder: (BuildContext context) {
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-
-                        children: <Widget>[
-                          ListTile(
-                            leading: CircleAvatar(
-                              backgroundImage: NetworkImage(result.icon!),
-                            ),
-                            title: Text(result.name),
-                            subtitle: Text(result.vicinity ?? ''),
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              const SizedBox(width: 20),
-                              Expanded(
-                                child: ElevatedButton(
-                                    style: ButtonStyle(
-                                      backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
-                                    ),
-                                    onPressed: () async => {
-                                      placeDetails = await _places.getDetailsByPlaceId(result.placeId),
-                                      if (response.status == 'OK') {
-                                        print('--------------'),
-                                        print(placeDetails.result.placeId),
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                OrganizeMeeting(placeDetails.result),
-                                          ),
-                                        ),
-                                      }
-                                    },
-                                    child: const Text('Let\'s meet here', style: TextStyle(fontSize: 10))
-                                ),
-                              ),
-                              const SizedBox(width: 20),
-                              Expanded(child:
-                              ElevatedButton(
-                                  style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all<Color>(Colors.grey),
-                                  ),
-                                  onPressed: () {Navigator.pop(context);},
-                                  child: const Text('Cancel', style: TextStyle(fontSize: 10))
-                              ),
-                              ),
-                              const SizedBox(width: 20),
-                            ],
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-              ));
-            }
+              onTap: () async {
+                placeDetailsResponse = await _places.getDetailsByPlaceId(result.placeId);
+                placeDetails = placeDetailsResponse.result;
+                _modalOrganizeMeeting(placeDetails);
+              },
+            ));
           }
-        });
-      }
+        }
+      });
     }
+  }
+
+  Future<List<PlaceDetails>> _getFavouritePlaces() async {
+    List<PlaceDetails> favouritePlaces=[];
+    favouritePlaces.add((await _places.getDetailsByPlaceId('ChIJ-eVnDB7oD0cRTobTaBciLuo')).result);//Na potrzeby testów, docelowo dynamicznie z bazy
+    favouritePlaces.add((await _places.getDetailsByPlaceId('ChIJAAAAAAAAAAARU5Q9tt99shs')).result);
+    favouritePlaces.add((await _places.getDetailsByPlaceId('ChIJAAAAAAAAAAARKWAQGjU70g4')).result);
+    
+    return favouritePlaces;
+  }
+
+  void _showFavouritePlaces () async {
+    List<PlaceDetails> favouritePlaces = await _getFavouritePlaces();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.orange.shade100,
+      builder: (BuildContext context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+
+          children: <Widget>[
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: favouritePlaces.length,
+              itemBuilder: (BuildContext context, int index) {
+                return GestureDetector(
+                  onTap: () {
+                    _onMapTapped(LatLng(favouritePlaces[index].geometry!.location.lat, favouritePlaces[index].geometry!.location.lng));
+                    _markers.clear();
+                    _markers.add(Marker(
+                      markerId: MarkerId(favouritePlaces[index].placeId),
+                      position: LatLng(favouritePlaces[index].geometry!.location!.lat, favouritePlaces[index].geometry!.location!.lng), // Add non-null assertion operator here
+                      infoWindow: InfoWindow(
+                        title: favouritePlaces[index].name,
+                        snippet: favouritePlaces[index].vicinity,
+                      ),
+
+                      onTap: () async {
+                        _modalOrganizeMeeting(favouritePlaces[index]);
+                      },
+                    ));
+                    Navigator.pop(context);
+                  },
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage: NetworkImage(favouritePlaces[index].icon!),
+                    ),
+                    title: Text(favouritePlaces[index].name),
+                    subtitle: Text(favouritePlaces[index].vicinity ?? ''),
+                  ),
+                );
+              },
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                const SizedBox(width: 20),
+                Expanded(child:
+                ElevatedButton(
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all<Color>(
+                          Colors.grey),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                        'Back', style: TextStyle(fontSize: 10))
+                ),
+                ),
+                const SizedBox(width: 20),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
@@ -253,11 +277,7 @@ class _MapScreenState extends State<MapScreen> {
                 onCameraMove: (CameraPosition position) {
                   _currentCameraPosition = position;
                 },
-                onCameraIdle: () {
-                  setState(() {
-                    //_getPlaces();
-                  });
-                },
+                onCameraIdle: () {},
                 onTap: _onMapTapped,
                 onPoiTap: (PointOfInterest poi) {
                   setState(() {
@@ -287,7 +307,7 @@ class _MapScreenState extends State<MapScreen> {
                           Icons.menu,
                           color: Colors.white,
                         ),
-                        onPressed: () { Scaffold.of(context).openDrawer(); },
+                        onPressed: () {Scaffold.of(context).openDrawer(); },
                       ),
                     ),
                   );
@@ -319,22 +339,26 @@ class _MapScreenState extends State<MapScreen> {
                               style: ButtonStyle(
                                 backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
                               ),
+                              onPressed: () {
+                                _getPlaces();
+                              },
+                              child: Text('Search for: $_favouritePlaceType', style: TextStyle(fontSize: 10))
+                          ),
+                          ElevatedButton(
+                              style: ButtonStyle(
+                                backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
+                              ),
+                              onPressed: () {
+                                _showFavouritePlaces();
+                              },
+                              child: const Text('Your favourite places', style: TextStyle(fontSize: 10))
+                          ),
+                          ElevatedButton(
+                              style: ButtonStyle(
+                                backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
+                              ),
                               onPressed: () {},
                               child: const Text('Find meetings nearby', style: TextStyle(fontSize: 10))
-                          ),
-                          ElevatedButton(
-                              style: ButtonStyle(
-                                backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
-                              ),
-                              onPressed: () {},
-                              child: const Text('Find popular places nearby', style: TextStyle(fontSize: 10))
-                          ),
-                          ElevatedButton(
-                              style: ButtonStyle(
-                                backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
-                              ),
-                              onPressed: () {},
-                              child: const Text('Search for playgrounds', style: TextStyle(fontSize: 10))
                           ),
                           ElevatedButton(
                               style: ButtonStyle(
