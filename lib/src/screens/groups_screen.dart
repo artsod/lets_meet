@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'src/model/groups_list_model.dart';
+import 'package:lets_meet/src/model/groups_list_model.dart';
 import 'package:provider/provider.dart';
 
 class GroupsScreen extends StatelessWidget {

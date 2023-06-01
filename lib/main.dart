@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
 import 'package:google_maps_webservice/places.dart';
-import 'package:lets_meet/edit_meeting.dart';
+import 'package:lets_meet/src/screens/edit_meeting_screen.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as mt;
-import 'organize_meeting.dart';
-import 'current_meetings.dart';
+import 'src/screens/organize_meeting_screen.dart';
+import 'src/api/api_current_meetings.dart';
 import 'dart:async';
-import 'favourite_places.dart';
+import 'src/api/api_favourite_places.dart';
 
 // Uncomment lines 3 and 6 to view the visual layout at runtime.
 //import 'package:flutter/rendering.dart' show debugPaintSizeEnabled;
