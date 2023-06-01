@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:intl/intl.dart';
-import 'durationPicker.dart';
+import 'duration_picker.dart';
 
 
 class OrganizeMeeting extends StatefulWidget {

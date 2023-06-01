@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
 import 'package:google_maps_webservice/places.dart';
-import 'package:lets_meet/editMeeting.dart';
+import 'package:lets_meet/edit_meeting.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as mt;
-import 'organizeMeeting.dart';
-import 'package:csv/csv.dart';
+import 'organize_meeting.dart';
+import 'current_meetings.dart';
 import 'dart:async';
-import 'package:flutter/services.dart';
+import 'favourite_places.dart';
 
 // Uncomment lines 3 and 6 to view the visual layout at runtime.
 //import 'package:flutter/rendering.dart' show debugPaintSizeEnabled;
@@ -27,14 +27,15 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  late PlacesDetailsResponse staticPlace; //####To jest tylko na potrzeby statycznego przypisania miejsca. Jak zrobimy właściwe wywołanie spoktania w toku, można to usunąć
-
+  late PlacesDetailsResponse staticPlace; //##To jest tylko na potrzeby statycznego przypisania miejsca. Jak zrobimy właściwe wywołanie spoktania w toku, można to usunąć
   late GoogleMapController mapController;
   final sqrt2 = 1.4142135623730951;
   final _places = GoogleMapsPlaces(apiKey: 'AIzaSyDWBhV1GqMnWxUjMDHiGHLNqvuthU8nUcE');
   final Set<Marker> _markers = {};
   final bool _isMeetingInProgress = true; //Do ustawienia dynamicznie
   final String _favouritePlaceType = 'Plac zabaw'; //Do ustawienia dynamicznie w opcjach konta
+  FavouritePlaces favouritePlaces = FavouritePlaces();
+  List<List<dynamic>> favouritePlacesList = [];
   String selectedPlaceType = 'Any';
   String enteredKeyword = '';
   CameraPosition _currentCameraPosition = const CameraPosition(
@@ -43,10 +44,19 @@ class _MapScreenState extends State<MapScreen> {
   );
   LatLng _tappedLocation = const LatLng(0,0);
 
-  void _onMapTapped(LatLng location) {
-    setState(() {
-      _tappedLocation = location;
+  void _onMapCreated(GoogleMapController controller) {
+    mapController = controller;
+  }
+
+  void _onMapTapped(LatLng location, [double? zoom]) {
+    _tappedLocation = location;
+    if (zoom != null) {
+      mapController.animateCamera(CameraUpdate.newLatLngZoom(location, zoom));
+    } else {
       mapController.animateCamera(CameraUpdate.newLatLng(location));
+    }
+    setState(() {
+
     });
   }
 
@@ -128,17 +138,8 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  Future<List<PlaceDetails>> _getFavouritePlaces() async {
-    List<PlaceDetails> favouritePlaces=[];
-    favouritePlaces.add((await _places.getDetailsByPlaceId('ChIJ-eVnDB7oD0cRTobTaBciLuo')).result);//Na potrzeby testów, docelowo dynamicznie z bazy
-    favouritePlaces.add((await _places.getDetailsByPlaceId('ChIJAAAAAAAAAAARU5Q9tt99shs')).result);
-    favouritePlaces.add((await _places.getDetailsByPlaceId('ChIJAAAAAAAAAAARKWAQGjU70g4')).result);
-    
-    return favouritePlaces;
-  }
-
   void _showFavouritePlaces () async {
-    List<PlaceDetails> favouritePlaces = await _getFavouritePlaces();
+    favouritePlacesList = await favouritePlaces.getFavouritePlaces();
 
     showModalBottomSheet(
       context: context,
@@ -150,25 +151,28 @@ class _MapScreenState extends State<MapScreen> {
           children: <Widget>[
             ListView.builder(
               shrinkWrap: true,
-              itemCount: favouritePlaces.length,
+              itemCount: favouritePlacesList.length,
               itemBuilder: (BuildContext context, int index) {
                 return GestureDetector(
                   onTap: () {
-                    _onMapTapped(LatLng(favouritePlaces[index].geometry!.location.lat, favouritePlaces[index].geometry!.location.lng));
-                    _markers.clear();
-                    _markers.add(Marker(
-                      markerId: MarkerId(favouritePlaces[index].placeId),
-                      position: LatLng(favouritePlaces[index].geometry!.location.lat, favouritePlaces[index].geometry!.location.lng),
-                      infoWindow: InfoWindow(
-                        title: favouritePlaces[index].name,
-                        snippet: favouritePlaces[index].vicinity,
-                      ),
+                    _onMapTapped(LatLng(favouritePlacesList[index][1],favouritePlacesList[index][2]),17);
 
-                      onTap: () async {
-                        _modalOrganizeMeeting(favouritePlaces[index]);
-                      },
-                    ));
-                    Navigator.pop(context);
+                    setState(() {
+                      _markers.clear();
+                      _markers.add(Marker(
+                        markerId: MarkerId(favouritePlacesList[index][0]),
+                        position: LatLng(favouritePlacesList[index][1],favouritePlacesList[index][2]),
+                        infoWindow: InfoWindow(
+                          title: favouritePlacesList[index][3],
+                          snippet: favouritePlacesList[index][4],
+                        ),
+
+                        onTap: () async {
+                          _modalOrganizeMeeting((await _places.getDetailsByPlaceId(favouritePlacesList[index][0])).result);
+                        },
+                      ));
+                      Navigator.pop(context);
+                    });
                   },
                   child: Row(
                     children: [
@@ -176,10 +180,10 @@ class _MapScreenState extends State<MapScreen> {
                         child:
                         ListTile(
                           leading: CircleAvatar(
-                            backgroundImage: NetworkImage(favouritePlaces[index].icon!),
+                            backgroundImage: NetworkImage(favouritePlacesList[index][5]),
                           ),
-                          title: Text(favouritePlaces[index].name),
-                          subtitle: Text(favouritePlaces[index].vicinity ?? ''),
+                          title: Text(favouritePlacesList[index][3]),
+                          subtitle: Text(favouritePlacesList[index][4] ?? ''),
                         ),
                       ),
                       ElevatedButton(
@@ -188,7 +192,12 @@ class _MapScreenState extends State<MapScreen> {
                                 Colors.grey),
                           ),
                           onPressed: () {
-                            _removeFromFavourites(favouritePlaces[index].placeId);
+                            setState(() {
+                              removeFromFavourites(favouritePlacesList[index][0]);
+                              _markers.clear();
+                              Navigator.pop(context);
+                              _showFavouritePlaces();
+                            });
                           },
                           child: const Text('Remove',
                               style: TextStyle(fontSize: 10))
@@ -205,18 +214,19 @@ class _MapScreenState extends State<MapScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 const SizedBox(width: 20),
-                Expanded(child:
-                ElevatedButton(
-                    style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all<Color>(
-                          Colors.orange.shade700),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text(
-                        'Back', style: TextStyle(fontSize: 10))
-                ),
+                Expanded(
+                  child:
+                  ElevatedButton(
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all<Color>(
+                            Colors.orange.shade700),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text(
+                          'Back', style: TextStyle(fontSize: 10))
+                  ),
                 ),
                 const SizedBox(width: 20),
               ],
@@ -227,16 +237,18 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  void _removeFromFavourites (String placeID) {
-
+  void removeFromFavourites(String placeID) {
+    favouritePlacesList.removeWhere((row) => row[0] == placeID);
+    favouritePlaces.removeFromFavourites(favouritePlacesList);
   }
 
-  void _addToFavourites() {
-
+  void addToFavourites (String placeID, double? lat, double? lng, String title, String? vicinity, String? icon) async {
+    favouritePlacesList.add([placeID,lat,lng,title,vicinity,icon]);
+    favouritePlaces.addToFavourites(favouritePlacesList);
   }
 
   void _searchOnTheMap () async {
-    final List<String> placeTypes = [//Docelowo do przemyślenia czy ma być na stałe czy dynamicznie i czy dopuszczamy wszystkie z googla
+    final List<String> placeTypes = [//##Docelowo do przemyślenia czy ma być na stałe czy dynamicznie i czy dopuszczamy wszystkie z googla
       'Any',
       'cafe',
       'tourist_attraction',
@@ -246,10 +258,11 @@ class _MapScreenState extends State<MapScreen> {
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.orange.shade100,
       builder: (BuildContext context) {
         return Container(
-          padding: const EdgeInsets.all(8.0),
+          padding: EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0, bottom: MediaQuery.of(context).viewInsets.bottom),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -371,21 +384,6 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  /* Przykładowa metoda do zapisania do pliku CSV - do wykorzystania później
-  void main() {
-    List<List<dynamic>> rows = [
-      ['Name', 'Age', 'Email'],
-      ['John', 25, 'john@example.com'],
-      ['Jane', 30, 'jane@example.com'],
-      ['Bob', 35, 'bob@example.com'],
-    ];
-
-    String csv = const ListToCsvConverter().convert(rows);
-
-    File file = new File('data.csv');
-    file.writeAsStringSync(csv);
-  }*/
-
   void _modalOrganizeMeeting (PlaceDetails details) {
     showModalBottomSheet(
       context: context,
@@ -427,18 +425,34 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
                 const SizedBox(width: 20),
-                Expanded(child:
-                ElevatedButton(
-                    style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all<Color>(
-                          Colors.grey),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text(
-                        'Cancel', style: TextStyle(fontSize: 10))
+                Expanded(
+                  child:
+                  ElevatedButton(
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all<Color>(
+                            Colors.orange.shade700),
+                      ),
+                      onPressed: () async {
+                        addToFavourites(details.placeId, details.geometry?.location.lat, details.geometry?.location.lng, details.name, details.vicinity, details.icon);
+                      },
+                      child: const Text(
+                          'Add to favourites', style: TextStyle(fontSize: 10))
+                  ),
                 ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child:
+                  ElevatedButton(
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all<Color>(
+                            Colors.grey),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text(
+                          'Cancel', style: TextStyle(fontSize: 10))
+                  ),
                 ),
                 const SizedBox(width: 20),
               ],
@@ -447,41 +461,6 @@ class _MapScreenState extends State<MapScreen> {
         );
       },
     );
-  }
-
-  void getCurrentMeetings() async {
-    String csv = await rootBundle.loadString('assets/currentMeetings.csv');
-
-    List<List<dynamic>> rowsAsListOfValues = const CsvToListConverter().convert(csv);
-
-    _markers.clear();
-
-    for (var row in rowsAsListOfValues) {
-      String placeID = row[0];
-      double lat = row[1];
-      double lng = row[2];
-      String name = row[3];
-      String vicinity = row[4];
-
-      _markers.add(Marker(
-        markerId: MarkerId(placeID),
-        position: LatLng(lat, lng),
-        infoWindow: InfoWindow(
-          title: name,
-          snippet: vicinity,
-        ),
-
-        onTap: () async {
-          PlacesDetailsResponse placeDetailsResponse = await _places.getDetailsByPlaceId(placeID);
-          PlaceDetails placeDetails = placeDetailsResponse.result;
-          _modalOrganizeMeeting(placeDetails);
-        },
-      ));
-    }
-
-    setState(() {
-      _fitMapToMarkers();
-    });
   }
 
   void _fitMapToMarkers() {
@@ -506,8 +485,35 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
+  void showCurrentMeetings() async {
+    List<dynamic> listOfCurrentMeetings = await CurrentMeetings().getCurrentMeetings();
+
+    _markers.clear();
+
+    for (var row in listOfCurrentMeetings) {
+      String placeID = row[0];
+      double lat = row[1];
+      double lng = row[2];
+      String name = row[3];
+      String vicinity = row[4];
+
+      _markers.add(Marker(
+        markerId: MarkerId(placeID),
+        position: LatLng(lat, lng),
+        infoWindow: InfoWindow(
+          title: name,
+          snippet: vicinity,
+        ),
+
+        onTap: () async {
+          PlaceDetails placeDetails = (await _places.getDetailsByPlaceId(placeID)).result;
+          _modalOrganizeMeeting(placeDetails);
+        },
+      ));
+    }
+    setState(() {
+      _fitMapToMarkers();
+    });
   }
 
   @override
@@ -604,7 +610,7 @@ class _MapScreenState extends State<MapScreen> {
                                 backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
                               ),
                               onPressed: () {
-                                getCurrentMeetings();
+                                showCurrentMeetings();
                               },
                               child: const Text('Find current meetings', style: TextStyle(fontSize: 10))
                           ),
