@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:lets_meet/src/screens/edit_meeting_screen.dart';
+import 'package:lets_meet/src/widgets/contacts_main.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as mt;
 import 'src/screens/organize_meeting_screen.dart';
 import 'src/api/api_current_meetings.dart';
@@ -694,9 +695,15 @@ class _MapScreenState extends State<MapScreen> {
                   child: const Text("Hi Marcin"),
                 ),
                 ListTile(
-                  title: const Text("Manage contacts"),
+                  title: const Text("Contacts and groups"),
                   onTap: () {
-
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ContactsManagement(),
+                      ),
+                    );
                   },
                 ),
                 ListTile(
