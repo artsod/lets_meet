@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Private Group 1",
+    "type": "MyPrivate"
+  },
+  {
+    "name": "Private Group 2",
+    "type": "MyPrivate"
+  },
+  {
+    "name": "Private Group 3",
+    "type": "MyPrivate"
+  },
+  {
+    "name": "Private Group 4",
+    "type": "MyPrivate"
+  },
+  {
+    "name": "Public Group 1",
+    "type": "MyPublic"
+  },
+  {
+    "name": "Public Group 2",
+    "type": "MyPublic"
+  },
+  {
+    "name": "Public Group 3",
+    "type": "MyPublic"
+  },
+  {
+    "name": "Public Group 4",
+    "type": "MyPublic"
+  },
+  {
+    "name": "Public Group 5",
+    "type": "OtherPublic"
+  },
+  {
+    "name": "Public Group 6",
+    "type": "OtherPublic"
+  },
+  {
+    "name": "Public Group 7",
+    "type": "OtherPublic"
+  },
+  {
+    "name": "Public Group 8",
+    "type": "OtherPublic"
+  }
+]

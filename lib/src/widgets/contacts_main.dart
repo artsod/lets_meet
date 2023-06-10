@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:lets_meet/src/api/api_groups.dart';
+import '../api/api_contacts.dart';
+import '../model/contact.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class ContactsManagement extends StatefulWidget {
+  const ContactsManagement({super.key});
+
   @override
   _ContactsManagementState createState() => _ContactsManagementState();
 }
@@ -8,36 +14,50 @@ class ContactsManagement extends StatefulWidget {
 class _ContactsManagementState extends State<ContactsManagement> {
   bool _showContacts = true;
 
-  // Dummy data for contacts and groups
-  final List<Contact> _contacts = [
-    Contact(name: 'John Doe', appInstalled: true),
-    Contact(name: 'Jane Smith', appInstalled: false),
-    Contact(name: 'Mike Johnson', appInstalled: true),
-  ];
+  ContactsApi contacts = ContactsApi();
+  List<Contact> _contactsList = [];
+  GroupsApi groups = GroupsApi();
+  List<Group> _groupsList = [];
+  Color mainColor = Colors.orange.shade700;
+  late Permission _permission;
 
-  final List<Group> _myPrivateGroups = [
-    Group(name: 'Private Group 1'),
-    Group(name: 'Private Group 2'),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    requestPermission();
+    initializeContacts();
+    initializeGroups();
+  }
 
-  final List<Group> _myPublicGroups = [
-    Group(name: 'Public Group 1'),
-    Group(name: 'Public Group 2'),
-  ];
+  Future<void> requestPermission() async {
+    _permission = Permission.contacts;
+    final status = await _permission.request();
 
-  final List<Group> _otherPublicGroups = [
-    Group(name: 'Public Group 3'),
-    Group(name: 'Public Group 4'),
-  ];
+    setState(() {
+      print(status);
+    });
+  }
 
-  Color color = Colors.orange.shade700;
+  Future<void> initializeContacts() async {
+    _contactsList = await contacts.getContacts();
+    setState(() {
+
+    });
+  }
+
+  Future<void> initializeGroups() async {
+    _groupsList = await groups.getGroups();
+    setState(() {
+
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Contacts and groups'),
-        backgroundColor: color,
+        backgroundColor: mainColor,
       ),
       body: Column(
         children: [
@@ -51,7 +71,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
                     });
                   },
                   child: Container(
-                    color: _showContacts ? color : Colors.grey,
+                    color: _showContacts ? mainColor : Colors.grey,
                     padding: const EdgeInsets.all(8.0),
                     child: const Text(
                       'Contacts',
@@ -72,7 +92,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
                     });
                   },
                   child: Container(
-                    color: !_showContacts ? color : Colors.grey,
+                    color: !_showContacts ? mainColor : Colors.grey,
                     padding: const EdgeInsets.all(8.0),
                     child: const Text(
                       'Groups',
@@ -94,11 +114,12 @@ class _ContactsManagementState extends State<ContactsManagement> {
   }
 
   Widget _buildContactsList() {
-    List<Contact> installedContacts = _contacts.where((contact) => contact.appInstalled).toList();
-    List<Contact> notInstalledContacts = _contacts.where((contact) => !contact.appInstalled).toList();
+    List<Contact> installedContacts = _contactsList.where((contact) => contact.isRegisterd).toList();
+    List<Contact> notInstalledContacts = _contactsList.where((contact) => !contact.isRegisterd).toList();
 
     return Expanded(
       child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
         children: [
           _buildContactGroup('People using MeetMeThere', installedContacts),
           _buildContactGroup('Invite to MeetMeThere', notInstalledContacts),
@@ -126,20 +147,19 @@ class _ContactsManagementState extends State<ContactsManagement> {
           physics: const ClampingScrollPhysics(),
           itemCount: contacts.length,
           itemBuilder: (BuildContext context, int index) {
-            Contact contact = contacts[index];
             return ListTile(
               leading: const Icon(Icons.account_box_outlined), //##docelowo powinna tutaj być jakaś ikonka usera
               title: Text(
-                contact.name,
+                contacts[index].name,
                 style: const TextStyle(fontSize: 12.0),
               ),
-              trailing: !contact.appInstalled
+              trailing: !contacts[index].isRegisterd
                   ? ElevatedButton(
                     onPressed: () {
                       // ##Logic to invite contact
                     },
                     style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all<Color>(color),
+                      backgroundColor: MaterialStateProperty.all<Color>(mainColor),
                     ),
                     child: const Text('Invite'),
               )
@@ -153,22 +173,131 @@ class _ContactsManagementState extends State<ContactsManagement> {
 
   Widget _buildGroupsList() {
     return Expanded(
-      child: ListView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildGroupTypeList('My Private Groups', _myPrivateGroups, true),
-          _buildGroupTypeList('My Public Groups', _myPublicGroups, true),
-          _buildGroupTypeList('Other Public Groups', _otherPublicGroups, false),
+          Expanded(
+            child: ListView(
+              children: [
+                _buildGroupTypeList('My Private Groups', _groupsList.where((group) => group.type == 'MyPrivate').toList()),
+                _buildGroupTypeList('My Public Groups', _groupsList.where((group) => group.type == 'MyPublic').toList()),
+                _buildGroupTypeList('Other Public Groups', _groupsList.where((group) => group.type == 'OtherPublic').toList()),
+              ],
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: ElevatedButton(
+                onPressed: () async {
+                  Group? newGroup = await showDialog<Group>(
+                    context: context,
+                    builder: (BuildContext context) {
+                      String groupName = '';
+                      String groupType = 'Private';
+                      Group newGroup;
+                      return StatefulBuilder(
+                          builder: (context, setState)
+                          {
+                            return AlertDialog(
+                              title: const Text('Create Group'),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextField(
+                                    onChanged: (value) {
+                                      setState(() {
+                                        groupName = value;
+                                      });
+                                    },
+                                    decoration: InputDecoration(
+                                        labelText: 'Group Name',
+                                        floatingLabelStyle: TextStyle(
+                                            color: mainColor),
+                                        focusedBorder: UnderlineInputBorder(
+                                            borderSide: BorderSide(
+                                                color: mainColor))
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Radio<String>(
+                                        activeColor: mainColor,
+                                        value: 'Private',
+                                        groupValue: groupType,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            groupType = value!;
+                                          });
+                                        },
+                                      ),
+                                      const Text('Private'),
+                                      Radio<String>(
+                                        activeColor: mainColor,
+                                        value: 'Public',
+                                        groupValue: groupType,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            groupType = value!;
+                                          });
+                                        },
+                                      ),
+                                      const Text('Public'),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              actions: [
+                                TextButton(
+                                  child: const Text('Cancel',
+                                      style: TextStyle(color: Colors.grey)),
+                                  onPressed: () {
+                                    Navigator.of(context).pop(); // Close the dialog
+                                  },
+                                ),
+                                TextButton(
+                                  child: Text('Create',
+                                      style: TextStyle(color: mainColor)),
+                                  onPressed: () {
+                                    if (groupName.isNotEmpty) {
+                                      if (groupType == 'Private') {
+                                        newGroup = Group(name: groupName, type: 'MyPrivate');
+                                      } else {
+                                        newGroup = Group(name: groupName, type: 'MyPublic');
+                                      }
+                                      Navigator.of(context).pop(newGroup);
+                                    }
+                                  },
+                                ),
+                              ],
+                            );
+                          }
+                      );
+                    },
+                  );
+                  if (newGroup != null) {
+                    //##Tutaj dodać logikę dodawania grupy w back-endzie
+                    groups.addGroup();
+                    setState(() {
+                      _groupsList.add(newGroup);
+                    });
+                  }
+                },
+                style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(mainColor)),
+                child: const Text('Create group')
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildGroupTypeList(String title, List<Group> groups, bool canEdit) {
+  Widget _buildGroupTypeList(String title, List<Group> group) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(8.0),
           child: Text(
             title,
             style: const TextStyle(
@@ -177,124 +306,225 @@ class _ContactsManagementState extends State<ContactsManagement> {
             ),
           ),
         ),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: ClampingScrollPhysics(),
-          itemCount: groups.length,
-          itemBuilder: (BuildContext context, int index) {
-            Group group = groups[index];
-            return ListTile(
-              title: Text(
-                group.name,
-                style: const TextStyle(fontSize: 12.0),
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (canEdit)
+        if (group.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              'There are no groups here',
+              style: TextStyle(color: Colors.grey),
+            ),
+          )
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const ClampingScrollPhysics(),
+            itemCount: group.length,
+            itemBuilder: (BuildContext context, int index) {
+              return ListTile(
+                title: Text(
+                  group[index].name,
+                  style: const TextStyle(fontSize: 12.0),
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     IconButton(
-                      icon: Icon(Icons.edit),
+                      icon: const Icon(Icons.delete),
                       onPressed: () {
-                        // Logic to edit group
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('Confirm'),
+                              content: const Text('Are you sure you want to remove this group?'),
+                              actions: [
+                                TextButton(
+                                  child: const Text('Cancel',
+                                      style: TextStyle(color: Colors.grey)),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                                TextButton(
+                                  child: const Text('Remove',
+                                      style: TextStyle(color: Colors.red)),
+                                  onPressed: () {
+                                    //##Tutaj wstawić logikę usuwania grupy w back-endzie
+                                    groups.removeGroup();
+                                    setState(() {
+                                      _groupsList.removeWhere((element) => element.name == group[index].name);
+                                    });
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
                       },
                     ),
-                  IconButton(
-                    icon: Icon(Icons.delete),
-                    onPressed: () {
-                      // Logic to remove group
-                    },
-                  ),
-                ],
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => GroupContactsScreen(group: group),
-                  ),
-                );
-              },
-            );
-          },
-        ),
+                  ],
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => GroupContactsScreen(groupList: _groupsList, renameGroup: renameGroup, index: index),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
       ],
     );
   }
-}
 
-class Contact {
-  final String name;
-  final bool appInstalled;
-
-  Contact({required this.name, required this.appInstalled});
-}
-
-class Group {
-  final String name;
-
-  Group({required this.name});
+  void renameGroup(List<Group> updatedList) {
+    setState(() {
+      _groupsList = updatedList;
+    });
+  }
 }
 
 class GroupContactsScreen extends StatefulWidget {
-  final Group group;
+  List<Group> groupList;
+  Function(List<Group>) renameGroup;
+  int index;
 
-  GroupContactsScreen({required this.group});
+  GroupContactsScreen({super.key, required this.groupList, required this.renameGroup, required this.index});
 
   @override
   _GroupContactsScreenState createState() => _GroupContactsScreenState();
 }
 
 class _GroupContactsScreenState extends State<GroupContactsScreen> {
-  List<Contact> _groupContacts = [
-    Contact(name: 'John Doe', appInstalled: true),
-    Contact(name: 'Jane Smith', appInstalled: false),
-    Contact(name: 'Mike Johnson', appInstalled: true),
-  ];
+  GroupsApi groupContact = GroupsApi();
+  List<GroupContacts> _groupContactsList = [];
+  List<Contact> _contactsList = [];
+  Color mainColor = Colors.orange.shade700;
+
+  @override
+  void initState() {
+    super.initState();
+    initializeGroupContacts();
+  }
+
+  Future<void> initializeGroupContacts() async {
+    _groupContactsList = await groupContact.getGroupContacts();
+    _groupContactsList = _groupContactsList.where((contact) => contact.name == widget.groupList[widget.index].name).toList();
+    _contactsList = await ContactsApi().getContacts();
+    _contactsList = _contactsList.where((contact) => _groupContactsList.any((groupContacts) => contact.id == groupContacts.contactId)).toList();
+    setState(() {
+
+    });
+  }
 
   Color color = Colors.orange.shade700;
-
-  List<Contact> _selectedContacts = [];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.group.name),
+        title: Text(widget.groupList[widget.index].name),
         backgroundColor: color,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () async {
+              String? input = await showDialog<String>(
+                context: context,
+                builder: (BuildContext context) {
+                  String? userInput;
+                  return AlertDialog(
+                    title: const Text('Enter new name'),
+                    content: TextField(
+                      controller: TextEditingController(text: widget.groupList[widget.index].name),
+                      decoration: InputDecoration(
+                          labelText: 'Group Name',
+                          floatingLabelStyle: TextStyle(
+                              color: mainColor),
+                          focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: mainColor))
+                      ),
+                      onChanged: (value) {
+                        userInput = value;
+                      },
+                    ),
+                    actions: [
+                      TextButton(
+                        child: const Text('Cancel',
+                          style: TextStyle(color: Colors.grey)),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        child: Text('Rename',
+                            style: TextStyle(color: mainColor)),
+                        onPressed: () {
+                          Navigator.of(context).pop(userInput);
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+
+              if (input != null) {
+                // ##Tutaj powinna być logika edycji grupy w backendzie
+                groupContact.editGroup();
+                widget.groupList[widget.index].name = input;
+                widget.renameGroup(widget.groupList);
+                setState(() {});
+              }
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
+          if (_contactsList.isEmpty)
+            const Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Center(
+                  child: Text(
+                    'There are no contacts in this group',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+              ),
+            )
+          else
           Expanded(
             child: ListView.builder(
-              itemCount: _groupContacts.length,
+              itemCount: _contactsList.length,
               itemBuilder: (BuildContext context, int index) {
-                Contact contact = _groupContacts[index];
-                bool isSelected = _selectedContacts.contains(contact);
+                Contact contact = _contactsList[index];
                 return ListTile(
                   title: Text(contact.name),
                   trailing: IconButton(
-                    icon: Icon(Icons.delete),
+                    icon: const Icon(Icons.delete),
                     onPressed: () {
-                      _removeContact(contact);
+                      //##Tutaj wstawić logikę usuwania kontaktu z grupy w back-endzie
+                      groupContact.removeContactFromGroup();
+                      setState(() {
+                        _contactsList.remove(contact);
+                      });
                     },
                   ),
                   onTap: () {
-                    setState(() {
-                      if (isSelected) {
-                        _selectedContacts.remove(contact);
-                      } else {
-                        _selectedContacts.add(contact);
-                      }
-                    });
+                    //##Tap on the contact - for now it does nothing. Should it do anything?
                   },
-                  tileColor: isSelected ? Colors.grey.shade200 : null,
                 );
               },
             ),
           ),
           ElevatedButton(
             onPressed: () {
-              _navigateToAddContacts();
+              _navigateToAddContacts(_contactsList);
             },
             style: ButtonStyle(
               backgroundColor: MaterialStateProperty.all<Color>(color),
@@ -306,54 +536,52 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
     );
   }
 
-  void _removeContact(Contact contact) {
-    setState(() {
-      _groupContacts.remove(contact);
-      _selectedContacts.remove(contact);
-    });
-  }
-
-  void _navigateToAddContacts() async {
-    List<Contact> selectedContacts = await Navigator.push(
+  void _navigateToAddContacts(List<Contact> contactsInGroup) async {
+    List<Contact>? selectedContacts = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ContactsListScreen(),
+        builder: (context) => AddContactsListScreen(contactsAlreadyInGroup: contactsInGroup),
       ),
     );
 
     if (selectedContacts != null && selectedContacts.isNotEmpty) {
+      //##Tutaj wstawić logikę dodawania kontaktu do grupy w back-endzie
+      groupContact.addContactToGroup();
       setState(() {
-        _groupContacts.addAll(selectedContacts);
+        _contactsList.addAll(selectedContacts);
       });
     }
   }
 }
 
-class ContactsListScreen extends StatefulWidget {
+class AddContactsListScreen extends StatefulWidget {
+  final List<Contact> contactsAlreadyInGroup;
+  const AddContactsListScreen({super.key, required this.contactsAlreadyInGroup});
+
   @override
-  _ContactsListScreenState createState() => _ContactsListScreenState();
+  _AddContactsListScreenState createState() => _AddContactsListScreenState();
 }
 
-class _ContactsListScreenState extends State<ContactsListScreen> {
-  List<Contact> _contacts = [
-    Contact(name: 'John Doe', appInstalled: true),
-    Contact(name: 'Jane Smith', appInstalled: false),
-    Contact(name: 'Mike Johnson', appInstalled: true),
-    Contact(name: 'John Doe', appInstalled: true),
-    Contact(name: 'Jane Smith', appInstalled: false),
-    Contact(name: 'Mike Johnson', appInstalled: true),
-    Contact(name: 'John Doe', appInstalled: true),
-    Contact(name: 'Jane Smith', appInstalled: false),
-    Contact(name: 'Mike Johnson', appInstalled: true),
-    Contact(name: 'John Doe', appInstalled: true),
-    Contact(name: 'Jane Smith', appInstalled: false),
-    Contact(name: 'Mike Johnson', appInstalled: true),
-    Contact(name: 'John Doe', appInstalled: true),
-    Contact(name: 'Jane Smith', appInstalled: false),
-    Contact(name: 'Last one', appInstalled: true),
-  ];
+class _AddContactsListScreenState extends State<AddContactsListScreen> {
+  ContactsApi contacts = ContactsApi();
+  List<Contact> _addableContactsList = [];
 
-  List<Contact> _selectedContacts = [];
+  @override
+  void initState() {
+    super.initState();
+    initializeContacts();
+  }
+
+  Future<void> initializeContacts() async {
+    _addableContactsList = await contacts.getContacts();
+    _addableContactsList = _addableContactsList.where((contact) => contact.isRegisterd).toList();
+    _addableContactsList = _addableContactsList.where((newContact) => !widget.contactsAlreadyInGroup.any((existingContact) => existingContact.id == newContact.id)).toList();
+    setState(() {
+
+    });
+  }
+
+  final List<Contact> _selectedContacts = [];
 
   Color color = Colors.orange.shade700;
 
@@ -361,21 +589,21 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Contacts List'),
+        title: const Text('Contacts List'),
         backgroundColor: color,
       ),
       body: Column(
         children: [
           Expanded(
             child: ListView.builder(
-              physics: AlwaysScrollableScrollPhysics(), // Set physics to AlwaysScrollableScrollPhysics
-              itemCount: _contacts.length,
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: _addableContactsList.length,
               itemBuilder: (BuildContext context, int index) {
-                Contact contact = _contacts[index];
+                Contact contact = _addableContactsList[index];
                 bool isSelected = _selectedContacts.contains(contact);
                 return ListTile(
                   title: Text(contact.name),
-                  trailing: isSelected ? Icon(Icons.check) : null,
+                  trailing: isSelected ? const Icon(Icons.check) : null,
                   onTap: () {
                     setState(() {
                       if (isSelected) {
@@ -396,7 +624,7 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
             style: ButtonStyle(
               backgroundColor: MaterialStateProperty.all<Color>(color),
             ),
-            child: Text('Add Selected Contacts'),
+            child: const Text('Add Selected Contacts'),
           ),
         ],
       ),
