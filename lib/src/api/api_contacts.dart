@@ -4,8 +4,24 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
 import '../model/contact.dart';
 import 'dart:convert';
+import 'package:contacts_service/contacts_service.dart' as cs;
 
 class ContactsApi {
+
+  Future<List<Contact>> getContactsLocal() async {
+    List<cs.Contact> csContacts = await cs.ContactsService.getContacts(withThumbnails: true);
+    csContacts.removeWhere((contact) => contact.phones!.isEmpty);
+
+    return csContacts.map((cs.Contact csContact) {
+      return Contact.fromJson({
+        'id': csContact.phones![0].value,
+        'name': csContact.displayName,
+        'email': 'marcinmaciejasz@op.pl',
+        'phoneNumber': csContact.phones![0].value,
+        'isRegisterd': true,
+      });
+    }).toList();
+  }
 
   Future<List<Contact>> getContacts() async {
     String contents = await rootBundle.loadString('assets/contacts.json');

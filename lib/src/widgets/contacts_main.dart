@@ -19,27 +19,36 @@ class _ContactsManagementState extends State<ContactsManagement> {
   GroupsApi groups = GroupsApi();
   List<Group> _groupsList = [];
   Color mainColor = Colors.orange.shade700;
-  late Permission _permission;
+  final Permission _permission = Permission.contacts;
+
 
   @override
   void initState() {
     super.initState();
+    getPhoneContacts();
     requestPermission();
     initializeContacts();
     initializeGroups();
   }
 
   Future<void> requestPermission() async {
-    _permission = Permission.contacts;
     final status = await _permission.request();
 
     setState(() {
-      print(status);
+
+    });
+  }
+
+  Future<void> getPhoneContacts() async {
+    //_csContacts = await cs.ContactsService.getContacts(withThumbnails: true);
+
+    setState(() {
+
     });
   }
 
   Future<void> initializeContacts() async {
-    _contactsList = await contacts.getContacts();
+    _contactsList = await contacts.getContactsLocal();
     setState(() {
 
     });
