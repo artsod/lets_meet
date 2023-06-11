@@ -2,27 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:intl/intl.dart';
 import '../widgets/duration_picker.dart';
+import '../screens/contacts_screen.dart';
+import '../model/contact.dart';
 
 
 class OrganizeMeeting extends StatefulWidget {
   final PlaceDetails place;
+  final List<Contact> contactsList;
 
-  OrganizeMeeting(this.place);
+  const OrganizeMeeting({super.key, required this.place, required this.contactsList});
 
   @override
-  _OrganizeMeetingState createState() => _OrganizeMeetingState(place);
+  _OrganizeMeetingState createState() => _OrganizeMeetingState();
 }
 
 class _OrganizeMeetingState extends State<OrganizeMeeting> {
 
-  final PlaceDetails place;
+  late PlaceDetails place = widget.place;
   final Color color = Colors.orange.shade700;
   late String _startMeetingText = 'Let\'s meet here now';
   bool startNow=true;
   DateTime _selectedDateTime = DateTime.now();
   Duration _duration = const Duration();
-
-  _OrganizeMeetingState(this.place);
+  List<Contact> _contactsList = [];
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +90,7 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
+          SizedBox(
             width: 170,
             child: Text('Select when will you be here',
               style: TextStyle(
@@ -130,6 +132,24 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
       ],
     );
 
+    void navigateToAddContacts(List<Contact> contactsInMeeting) async {
+      _contactsList = widget.contactsList;
+      List<Contact>? selectedContacts = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AddContactsListScreen(contactsList: _contactsList, contactsToExclue: contactsInMeeting),
+        ),
+      );
+/*
+      if (selectedContacts != null && selectedContacts.isNotEmpty) {
+        //##Tutaj wstawić logikę dodawania kontaktu do grupy w back-endzie
+        groupContact.addContactToGroup();
+        setState(() {
+          _groupContactsList.addAll(selectedContacts);
+        });
+      }*/
+    }
+
     Widget contactsSection = Column(
         children: [
           Row(
@@ -149,12 +169,12 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all<Color>(color),
                   ),
-                  onPressed: () => {
-
+                  onPressed: () {
+                    navigateToAddContacts([]);
                   },
-                  child: Text('Select people', style: TextStyle(fontSize: 10))
+                  child: const Text('Select people', style: TextStyle(fontSize: 10))
               ),
-              Text('People you have selected'),
+              const Text('People you have selected'),
             ],
           ),
         ],
@@ -172,7 +192,7 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
               onPressed: () => {
 
               },
-              child: Text(_startMeetingText, style: TextStyle(fontSize: 10))
+              child: Text(_startMeetingText, style: const TextStyle(fontSize: 10))
           ),
         ),
         const SizedBox(width: 20),
@@ -203,7 +223,7 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
                 fit: BoxFit.cover,
           ),
           Container(
-            padding: EdgeInsets.all(32),
+            padding: const EdgeInsets.all(32),
             child: Column(
               children: [
                 titleSection,
@@ -246,15 +266,15 @@ class _DateTimePickerState extends State<DateTimePicker> {
     return InkWell(
       onTap: _showDateTimePicker,
       child: Container(
-        padding: EdgeInsets.all(5),
+        padding: const EdgeInsets.all(5),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.grey),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           children: [
-            Icon(Icons.calendar_today),
-            SizedBox(width: 12),
+            const Icon(Icons.calendar_today),
+            const SizedBox(width: 12),
             Text(_formatDateTime(_dateTime)),
           ],
         ),
