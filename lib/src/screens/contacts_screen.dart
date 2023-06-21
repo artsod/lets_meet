@@ -44,6 +44,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
     });
   }
 
+  //main structure widget - Scaffold
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,21 +106,23 @@ class _ContactsManagementState extends State<ContactsManagement> {
     );
   }
 
+  //contacts section of main widget - split into two types: registered and unregistered contacts
   Widget _buildContactsList() {
-    List<Contact> installedContacts = _contactsList.where((contact) => contact.isRegisterd).toList();
-    List<Contact> notInstalledContacts = _contactsList.where((contact) => !contact.isRegisterd).toList();
+    List<Contact> registeredContacts = _contactsList.where((contact) => contact.isRegisterd).toList();
+    List<Contact> unregisteredContacts = _contactsList.where((contact) => !contact.isRegisterd).toList();
 
     return Expanded(
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          _buildContactGroup('People using MeetMeThere', installedContacts),
-          _buildContactGroup('Invite to MeetMeThere', notInstalledContacts),
+          _buildContactGroup('People using MeetMeThere', registeredContacts),
+          _buildContactGroup('Invite to MeetMeThere', unregisteredContacts),
         ],
       ),
     );
   }
 
+  //widget building each of two contact types (registered and unregistered)
   Widget _buildContactGroup(String title, List<Contact> contacts) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -163,6 +166,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
     );
   }
 
+  //groups section of main widget - split into three types: my private, my public and other public
   Widget _buildGroupsList() {
     return Expanded(
       child: Column(
@@ -284,6 +288,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
     );
   }
 
+  //widget building each of three group types
   Widget _buildGroupTypeList(String title, List<Group> group) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -372,6 +377,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
     );
   }
 
+  //method for renaming group - passed as callback to other widgets
   void renameGroup(List<Group> updatedList) {
     setState(() {
       _groupsList = updatedList;
@@ -479,6 +485,7 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
       ),
       body: Column(
         children: [
+          //If the list is empty, show message
           if (_groupContactsList.isEmpty)
             const Expanded(
               child: Padding(
@@ -492,6 +499,7 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
               ),
             )
           else
+          //If there are any contacts, show list of them
           Expanded(
             child: ListView.builder(
               itemCount: _groupContactsList.length,
