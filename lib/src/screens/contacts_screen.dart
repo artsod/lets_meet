@@ -3,10 +3,10 @@ import 'package:lets_meet/src/api/api_groups.dart';
 import '../model/contact.dart';
 
 class ContactsManagement extends StatefulWidget {
-  List<Contact> contactList;
-  Function(List<Contact>) updateContactsList;
+  final List<Contact> contactList;
+  final Function(List<Contact>) updateContactsList;
 
-  ContactsManagement({super.key, required this.contactList, required this.updateContactsList});
+  const ContactsManagement({super.key, required this.contactList, required this.updateContactsList});
 
   @override
   _ContactsManagementState createState() => _ContactsManagementState();
@@ -386,12 +386,12 @@ class _ContactsManagementState extends State<ContactsManagement> {
 }
 
 class GroupContactsScreen extends StatefulWidget {
-  List<Group> groupList;
-  Function(List<Group>) renameGroup;
-  int index;
-  List<Contact> contactsList;
+  final List<Group> groupList;
+  final Function(List<Group>) renameGroup;
+  final int index;
+  final List<Contact> contactsList;
 
-  GroupContactsScreen({super.key, required this.groupList, required this.renameGroup, required this.index, required this.contactsList});
+  const GroupContactsScreen({super.key, required this.groupList, required this.renameGroup, required this.index, required this.contactsList});
 
   @override
   _GroupContactsScreenState createState() => _GroupContactsScreenState();
@@ -542,7 +542,7 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
     List<Contact>? selectedContacts = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddContactsListScreen(contactsList: _contactsList, contactsToExclue: contactsInGroup),
+        builder: (context) => AddContactsListScreen(contactsList: _contactsList, contactsToExclude: contactsInGroup),
       ),
     );
 
@@ -558,8 +558,8 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
 
 class AddContactsListScreen extends StatefulWidget {
   final List<Contact> contactsList;
-  final List<Contact> contactsToExclue;
-  const AddContactsListScreen({super.key, required this.contactsList, required this.contactsToExclue});
+  final List<Contact> contactsToExclude;
+  const AddContactsListScreen({super.key, required this.contactsList, required this.contactsToExclude});
 
   @override
   _AddContactsListScreenState createState() => _AddContactsListScreenState();
@@ -577,7 +577,7 @@ class _AddContactsListScreenState extends State<AddContactsListScreen> {
   Future<void> initializeContacts() async {
     _addableContactsList = widget.contactsList;
     _addableContactsList = _addableContactsList.where((contact) => contact.isRegisterd).toList();
-    _addableContactsList = _addableContactsList.where((newContact) => !widget.contactsToExclue.any((existingContact) => existingContact.id == newContact.id)).toList();
+    _addableContactsList = _addableContactsList.where((newContact) => !widget.contactsToExclude.any((existingContact) => existingContact.id == newContact.id)).toList();
     setState(() {
 
     });
@@ -627,6 +627,83 @@ class _AddContactsListScreenState extends State<AddContactsListScreen> {
               backgroundColor: MaterialStateProperty.all<Color>(color),
             ),
             child: const Text('Add Selected Contacts'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class AddGroupsListScreen extends StatefulWidget {
+  final List<Group> groupsList;
+  final List<Group> groupsToExclude;
+  const AddGroupsListScreen({super.key, required this.groupsList, required this.groupsToExclude});
+
+  @override
+  _AddGroupsListScreenState createState() => _AddGroupsListScreenState();
+}
+
+class _AddGroupsListScreenState extends State<AddGroupsListScreen> {
+  List<Group> _addableGroupsList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    initializeGroups();
+  }
+
+  Future<void> initializeGroups() async {
+    _addableGroupsList = widget.groupsList;
+    _addableGroupsList = _addableGroupsList.where((newGroup) => !widget.groupsToExclude.any((existingGroup) => existingGroup.name == newGroup.name)).toList();
+    setState(() {
+
+    });
+  }
+
+  final List<Group> _selectedGroups = [];
+
+  Color color = Colors.orange.shade700;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Groups List'),
+        backgroundColor: color,
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: _addableGroupsList.length,
+              itemBuilder: (BuildContext context, int index) {
+                Group group = _addableGroupsList[index];
+                bool isSelected = _selectedGroups.contains(group);
+                return ListTile(
+                  title: Text(group.name),
+                  trailing: isSelected ? const Icon(Icons.check) : null,
+                  onTap: () {
+                    setState(() {
+                      if (isSelected) {
+                        _selectedGroups.remove(group);
+                      } else {
+                        _selectedGroups.add(group);
+                      }
+                    });
+                  },
+                );
+              },
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context, _selectedGroups);
+            },
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.all<Color>(color),
+            ),
+            child: const Text('Add Selected Groups'),
           ),
         ],
       ),

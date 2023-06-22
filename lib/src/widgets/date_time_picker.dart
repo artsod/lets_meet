@@ -12,7 +12,7 @@ class DateTimePicker extends StatefulWidget {
 
 class _DateTimePickerState extends State<DateTimePicker> {
   late DateTime _dateTime;
-  final Color _color=Colors.orange.shade700;
+  final Color _color = Colors.orange.shade700;
   //Locale myLocale = Localizations.localeOf(this.context); //Implement later
 
   @override
@@ -27,10 +27,6 @@ class _DateTimePickerState extends State<DateTimePicker> {
       onTap: _showDateTimePicker,
       child: Container(
         padding: const EdgeInsets.all(5),
-        decoration: BoxDecoration(
-          //border: Border.all(color: Colors.grey),
-          //borderRadius: BorderRadius.circular(10),
-        ),
         child: Row(
           children: [
             Icon(Icons.calendar_today, size: 16),
@@ -68,26 +64,31 @@ class _DateTimePickerState extends State<DateTimePicker> {
       final time = await showTimePicker(
           context: context,
           initialTime: TimeOfDay.fromDateTime(_dateTime),
-          //Find a way to merge those two builders to format time picker
-          /*builder: (context, child) {
-          return Theme(
-            data: Theme.of(context).copyWith(
-              colorScheme: ColorScheme.light(
-                primary: _color, // <-- SEE HERE
-              ),
-              textButtonTheme: TextButtonThemeData(
-                style: TextButton.styleFrom(
-                  foregroundColor: _color, // button text color
-                ),
-              ),
-            ),
-            child: child!,
-          );
-        },*/
           builder: (BuildContext context, Widget? child) {
-            return MediaQuery(
-              data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-              child: child!,
+            return Theme(
+              data: ThemeData(
+                  colorScheme: ColorScheme.light(
+                    primary: _color,
+                  ),
+                  textButtonTheme: TextButtonThemeData(
+                    style: ButtonStyle(
+                        foregroundColor: MaterialStateProperty.all(_color)),
+                  ),
+                  timePickerTheme: TimePickerThemeData(
+                      dialHandColor: _color,
+                      dialBackgroundColor: Colors.white,
+                      hourMinuteTextColor: _color,
+                      entryModeIconColor: _color,
+                      inputDecorationTheme: const InputDecorationTheme(
+                        enabledBorder: InputBorder.none,
+                        filled: true,
+                      )
+                  )
+              ),
+              child: MediaQuery(
+                data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+                child: child!,
+              ),
             );
           }
       );

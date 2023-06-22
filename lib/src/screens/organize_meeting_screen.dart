@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_webservice/places.dart';
 import '../widgets/duration_picker.dart';
 import '../widgets/date_time_picker.dart';
+import '../widgets/attendees_list.dart';
 import '../screens/contacts_screen.dart';
 import '../model/contact.dart';
 import '../api/api_groups.dart';
-
 
 class OrganizeMeeting extends StatefulWidget {
   final PlaceDetails place;
@@ -25,9 +25,9 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
   bool startNow=true;
   DateTime _selectedDateTime = DateTime.now();
   Duration _duration = const Duration();
-  List<Contact> _contactsList = [];
-  List<Contact> _contactsInMeeting = [];
-  List<Group> _groupsInMeeting = [];
+  final List<Contact> _contactsInMeeting = [];
+  List<Group> _groupsList = [];
+  final List<Group> _groupsInMeeting = [];
 
   @override
   Widget build(BuildContext context) {
@@ -89,26 +89,31 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
 
     Widget timeSection = Visibility(
       visible: !startNow,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: [
-          SizedBox(
-            width: 170,
-            child: Text('Select when will you be here',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: color,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SizedBox(
+                width: 170,
+                child: Text('Select when will you be here',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: color,
+                  ),
+                ),
               ),
-            ),
+              DateTimePicker(
+                onChanged: (dateTime) {
+                  setState(() {
+                    _selectedDateTime = dateTime;
+                  });
+                },
+              ),
+            ],
           ),
-          DateTimePicker(
-            onChanged: (dateTime) {
-              setState(() {
-                _selectedDateTime = dateTime;
-              });
-            },
-          ),
+          const SizedBox(height: 10),
         ],
       ),
     );
@@ -134,67 +139,102 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
       ],
     );
 
-    void navigateToAddContacts(List<Contact> contactsInMeeting) async {
-      _contactsList = widget.contactsList;
+    void navigateToAddContacts() async {
       List<Contact>? selectedContacts = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => AddContactsListScreen(contactsList: _contactsList, contactsToExclue: contactsInMeeting),
+          builder: (context) => AddContactsListScreen(contactsList: widget.contactsList, contactsToExclude: _contactsInMeeting),
         ),
       );
-/*
+
       if (selectedContacts != null && selectedContacts.isNotEmpty) {
         //##Tutaj wstawić logikę dodawania ludzi do spotkania w back-endzie
         //##.addContactToMeeting();
         setState(() {
-          _groupContactsList.addAll(selectedContacts);
+          _contactsInMeeting.addAll(selectedContacts);
         });
-      }*/
+      }
+    }
+
+    Future<void> initializeGroups() async {
+      _groupsList = await GroupsApi().getGroups();
+    }
+
+    void navigateToAddGroups() async {
+      List<Group>? selectedGroups = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AddGroupsListScreen(groupsList: _groupsList, groupsToExclude: _groupsInMeeting),
+        ),
+      );
+
+      if (selectedGroups != null && selectedGroups.isNotEmpty) {
+        //##Tutaj wstawić logikę dodawania grup do spotkania w back-endzie
+        //##.addGroupToMeeting();
+        setState(() {
+          _groupsInMeeting.addAll(selectedGroups);
+        });
+      }
     }
 
     Widget contactsSection = Column(
-        children: [
-          Row(
-              children: [
-                Text('With whom would you like to meet?',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: color,
-                  ),
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Text('With whom would you like to meet?',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: color,
                 ),
-              ]
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
+              ),
+              const SizedBox(width: 10),
               ElevatedButton(
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all<Color>(color),
+                    padding: MaterialStateProperty.all<EdgeInsets>(const EdgeInsets.all(2.0)),
+                    minimumSize: MaterialStateProperty.all<Size>(const Size(70, 25)),
                   ),
                   onPressed: () {
-                    navigateToAddContacts([]);
+                    navigateToAddContacts();
                   },
-                  child: const Text('Select people', style: TextStyle(fontSize: 10))
+                  child: const Text('Add people', style: TextStyle(fontSize: 10))
               ),
-              const Text('People you have selected'),
-            ],
-          ),
-          Row(
-            children: [
+              const SizedBox(width: 10),
               ElevatedButton(
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all<Color>(color),
+                    padding: MaterialStateProperty.all<EdgeInsets>(const EdgeInsets.all(2.0)),
+                    minimumSize: MaterialStateProperty.all<Size>(const Size(70, 25)),
                   ),
                   onPressed: () {
-                    //navigateToAddGroups([]);
+                    initializeGroups();
+                    navigateToAddGroups();
                   },
-                  child: const Text('Select groups', style: TextStyle(fontSize: 10))
+                  child: const Text('Add groups', style: TextStyle(fontSize: 10))
               ),
-              const Text('Groups you have selected'),
-            ],
+            ]
+        ),
+        if ((_contactsInMeeting.isEmpty && _groupsInMeeting.isEmpty))
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              'You haven\'t invited anyone yet',
+              style: TextStyle(color: Colors.grey),
+            ),
           ),
-        ],
+        Row(
+          children: [
+            AttendeesList(attendeesList: _contactsInMeeting),
+          ],
+        ),
+        Row(
+          children: [
+            AttendeesList(attendeesList: _groupsInMeeting),
+          ],
+        ),
+      ],
     );
 
     Widget buttonSection = Align(
@@ -255,7 +295,6 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
                         switchSection,
                         timeSection,
                         durationSection,
-                        const SizedBox(height: 10),
                         contactsSection,
                       ],
                     ),
