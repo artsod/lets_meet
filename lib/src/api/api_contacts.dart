@@ -11,6 +11,7 @@ class ContactsApi {
   Future<List<Contact>> getContactsLocal() async {
     List<cs.Contact> csContacts = await cs.ContactsService.getContacts(withThumbnails: true);
     csContacts.removeWhere((contact) => contact.phones!.isEmpty);
+    csContacts.removeWhere((contact) => contact.displayName![0] != ('G') && contact.displayName![0] != ('I')); //##docelowo usunąć - tylko na potrzeby testów, żeby zmniejszyć liczbę kontaktów
 
     return csContacts.map((cs.Contact csContact) {
       return Contact.fromJson({
@@ -18,7 +19,7 @@ class ContactsApi {
         'name': csContact.displayName,
         'email': 'marcinmaciejasz@op.pl',
         'phoneNumber': csContact.phones![0].value,
-        'isRegisterd': true,
+        'isRegistered': true,
       });
     }).toList();
   }

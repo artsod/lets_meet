@@ -3,14 +3,14 @@ class Contact {
   final String name;
   final String email;
   final String phoneNumber;
-  bool isRegisterd;
+  bool isRegistered;
 
   Contact({
     required this.id,
     required this.name,
     required this.email,
     required this.phoneNumber,
-    required this.isRegisterd,
+    required this.isRegistered,
   });
 
   factory Contact.fromJson(Map<String, dynamic> json) {
@@ -19,7 +19,7 @@ class Contact {
       name: json['name'] as String,
       email: json['email'] as String,
       phoneNumber: json['phoneNumber'] as String,
-      isRegisterd: json['isRegisterd'] as bool,
+      isRegistered: json['isRegistered'] as bool,
     );
   }
 }

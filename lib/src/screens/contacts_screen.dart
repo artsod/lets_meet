@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lets_meet/src/api/api_groups.dart';
 import '../model/contact.dart';
+import 'package:flutter_sms/flutter_sms.dart';
+
+
 
 class ContactsManagement extends StatefulWidget {
   final List<Contact> contactList;
@@ -20,6 +23,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
   GroupsApi groups = GroupsApi();
   List<Group> _groupsList = [];
   Color mainColor = Colors.orange.shade700;
+  Color secondaryColor = Colors.orange.shade100;
 
   @override
   void initState() {
@@ -42,6 +46,14 @@ class _ContactsManagementState extends State<ContactsManagement> {
     setState(() {
 
     });
+  }
+
+  void sendInvitation(String message, List<String> recipents) async {
+    String result = await sendSMS(message: message, recipients: recipents)
+        .catchError((onError) {
+      print(onError);
+    });
+    print(result);
   }
 
   //main structure widget - Scaffold
@@ -108,15 +120,109 @@ class _ContactsManagementState extends State<ContactsManagement> {
 
   //contacts section of main widget - split into two types: registered and unregistered contacts
   Widget _buildContactsList() {
-    List<Contact> registeredContacts = _contactsList.where((contact) => contact.isRegisterd).toList();
-    List<Contact> unregisteredContacts = _contactsList.where((contact) => !contact.isRegisterd).toList();
+    List<Contact> registeredContacts = _contactsList.where((contact) => contact.isRegistered).toList();
+    List<Contact> unregisteredContacts = _contactsList.where((contact) => !contact.isRegistered).toList();
 
     return Expanded(
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildContactGroup('People using MeetMeThere', registeredContacts),
-          _buildContactGroup('Invite to MeetMeThere', unregisteredContacts),
+          Expanded(
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                _buildContactGroup('People using MeetMeThere', registeredContacts),
+                _buildContactGroup('Invite to MeetMeThere', unregisteredContacts),
+              ],
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: ElevatedButton(
+                onPressed: () async {
+                  Contact? newContact = await showDialog<Contact>(
+                    context: context,
+                    builder: (BuildContext context) {
+                      String contactName = '';
+                      String contactNumber = '';
+                      Contact newContact;
+                      return StatefulBuilder(
+                          builder: (context, setState)
+                          {
+                            return AlertDialog(
+                              title: const Text('Add new contact'),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextField(
+                                    onChanged: (value) {
+                                      setState(() {
+                                        contactName = value;
+                                      });
+                                    },
+                                    decoration: InputDecoration(
+                                        labelText: 'Name',
+                                        floatingLabelStyle: TextStyle(
+                                            color: mainColor),
+                                        focusedBorder: UnderlineInputBorder(
+                                            borderSide: BorderSide(
+                                                color: mainColor))
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TextField(
+                                    onChanged: (value) {
+                                      setState(() {
+                                        contactNumber = value;
+                                      });
+                                    },
+                                    decoration: InputDecoration(
+                                        labelText: 'Phone number',
+                                        floatingLabelStyle: TextStyle(
+                                            color: mainColor),
+                                        focusedBorder: UnderlineInputBorder(
+                                            borderSide: BorderSide(
+                                                color: mainColor))
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              actions: [
+                                TextButton(
+                                  child: const Text('Cancel',
+                                      style: TextStyle(color: Colors.grey)),
+                                  onPressed: () {
+                                    Navigator.of(context).pop(); // Close the dialog
+                                  },
+                                ),
+                                TextButton(
+                                    child: Text('Add',
+                                        style: TextStyle(color: mainColor)),
+                                    onPressed: () {
+                                      if (contactName.isNotEmpty && contactNumber.isNotEmpty) {
+                                        newContact = Contact(name: contactName, email: 'marcinmaciejasz@op.pl', phoneNumber: contactNumber, isRegistered: false, id: contactNumber);
+                                        Navigator.of(context).pop(newContact);
+                                      }
+                                    }
+                                ),
+                              ],
+                            );
+                          }
+                      );
+                    },
+                  );
+                  if (newContact != null) {
+                    //##Tutaj dodać logikę dodawania grupy w back-endzie
+                    //groups.addGroup();
+                    setState(() {
+                      _contactsList.add(newContact);
+                    });
+                  }
+                },
+                style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(mainColor)),
+                child: const Text('Add new contact')
+            ),
+          ),
         ],
       ),
     );
@@ -143,22 +249,92 @@ class _ContactsManagementState extends State<ContactsManagement> {
           itemCount: contacts.length,
           itemBuilder: (BuildContext context, int index) {
             return ListTile(
-              leading: const Icon(Icons.account_box_outlined), //##docelowo powinna tutaj być jakaś ikonka usera
+              leading: CircleAvatar(
+                  backgroundColor: secondaryColor,
+                  child: Text(contacts[index].name[0], style: TextStyle(color: mainColor))
+              ),
+              //leading: const Icon(Icons.account_box_outlined), //##docelowo powinna tutaj być jakaś ikonka usera
               title: Text(
                 contacts[index].name,
                 style: const TextStyle(fontSize: 12.0),
               ),
-              trailing: !contacts[index].isRegisterd
-                  ? ElevatedButton(
-                    onPressed: () {
-                      // ##Logic to invite contact
-                    },
-                    style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all<Color>(mainColor),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!contacts[index].isRegistered)
+                    IconButton(
+                      icon: Icon(Icons.person_add, color: mainColor),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('Confirm'),
+                              content: const Text('This action will create an invitation text message ready to be sent. Do you want to continue?'),
+                              actions: [
+                                TextButton(
+                                  child: const Text('Cancel',
+                                      style: TextStyle(color: Colors.grey)),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                                TextButton(
+                                  child: Text('Continue',
+                                      style: TextStyle(color: mainColor)),
+                                  onPressed: () {
+                                    //##Tutaj wstawić logikę wysyłania zaproszenia w back-endzie
+                                    sendInvitation('Hi! Check out MeetMeThere app where you can easily notify your friends where they can meet you. Here\'s the link: TUTAJ LINK', [contacts[index].phoneNumber]);
+                                    setState(() {
+
+                                    });
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
                     ),
-                    child: const Text('Invite'),
-              )
-                  : null,
+                  const SizedBox(width: 10),
+                  IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Confirm'),
+                            content: const Text('Are you sure you want to remove this contact?'),
+                            actions: [
+                              TextButton(
+                                child: const Text('Cancel',
+                                    style: TextStyle(color: Colors.grey)),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              TextButton(
+                                child: const Text('Remove',
+                                    style: TextStyle(color: Colors.red)),
+                                onPressed: () {
+                                  //##Tutaj wstawić logikę usuwania kontaktu w back-endzie
+                                  //groups.removeGroup();
+                                  setState(() {
+                                    _contactsList.removeWhere((element) => element.phoneNumber == contacts[index].phoneNumber);
+                                  });
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
             );
           },
         ),
@@ -455,7 +631,7 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
                     actions: [
                       TextButton(
                         child: const Text('Cancel',
-                          style: TextStyle(color: Colors.grey)),
+                            style: TextStyle(color: Colors.grey)),
                         onPressed: () {
                           Navigator.of(context).pop();
                         },
@@ -500,30 +676,30 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
             )
           else
           //If there are any contacts, show list of them
-          Expanded(
-            child: ListView.builder(
-              itemCount: _groupContactsList.length,
-              itemBuilder: (BuildContext context, int index) {
-                Contact contact = _groupContactsList[index];
-                return ListTile(
-                  title: Text(contact.name),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () {
-                      //##Tutaj wstawić logikę usuwania kontaktu z grupy w back-endzie
-                      groupContact.removeContactFromGroup();
-                      setState(() {
-                        _groupContactsList.remove(contact);
-                      });
+            Expanded(
+              child: ListView.builder(
+                itemCount: _groupContactsList.length,
+                itemBuilder: (BuildContext context, int index) {
+                  Contact contact = _groupContactsList[index];
+                  return ListTile(
+                    title: Text(contact.name),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () {
+                        //##Tutaj wstawić logikę usuwania kontaktu z grupy w back-endzie
+                        groupContact.removeContactFromGroup();
+                        setState(() {
+                          _groupContactsList.remove(contact);
+                        });
+                      },
+                    ),
+                    onTap: () {
+                      //##Tap on the contact - for now it does nothing. Should it do anything?
                     },
-                  ),
-                  onTap: () {
-                    //##Tap on the contact - for now it does nothing. Should it do anything?
-                  },
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
           ElevatedButton(
             onPressed: () {
               _navigateToAddContacts(_groupContactsList);
@@ -576,7 +752,7 @@ class _AddContactsListScreenState extends State<AddContactsListScreen> {
 
   Future<void> initializeContacts() async {
     _addableContactsList = widget.contactsList;
-    _addableContactsList = _addableContactsList.where((contact) => contact.isRegisterd).toList();
+    _addableContactsList = _addableContactsList.where((contact) => contact.isRegistered).toList();
     _addableContactsList = _addableContactsList.where((newContact) => !widget.contactsToExclude.any((existingContact) => existingContact.id == newContact.id)).toList();
     setState(() {
 
