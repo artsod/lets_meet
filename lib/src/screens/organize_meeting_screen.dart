@@ -282,11 +282,19 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Image.network('https://maps.googleapis.com/maps/api/place/photo?maxwidth=500&photo_reference=${place.photos.first.photoReference}&key=AIzaSyDWBhV1GqMnWxUjMDHiGHLNqvuthU8nUcE',
-                    width:500,
-                    height:240,
-                    fit: BoxFit.cover,
-                  ),
+                  if (place.photos.isNotEmpty)
+                    Image.network('https://maps.googleapis.com/maps/api/place/photo?maxwidth=500&photo_reference=${place.photos.first.photoReference}&key=AIzaSyDWBhV1GqMnWxUjMDHiGHLNqvuthU8nUcE',
+                      width:500,
+                      height:240,
+                      fit: BoxFit.cover,
+                    )
+                  else
+                    Image.asset(
+                      'assets/no_photo.jpg',//##zdjęcie z depositphotos bez licencji, zmienić później
+                      width: 500,
+                      height: 240,
+                      fit:BoxFit.cover,
+                    ),
                   Container(
                     padding: const EdgeInsets.all(24),
                     child: Column(

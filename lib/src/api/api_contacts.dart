@@ -11,9 +11,9 @@ class ContactsApi {
   Future<List<Contact>> getContactsLocal() async {
     List<cs.Contact> csContacts = await cs.ContactsService.getContacts(withThumbnails: true);
     csContacts.removeWhere((contact) => contact.phones!.isEmpty);
-    csContacts.removeWhere((contact) => contact.displayName![0] != ('G') && contact.displayName![0] != ('I')); //##docelowo usunąć - tylko na potrzeby testów, żeby zmniejszyć liczbę kontaktów
-
-    return csContacts.map((cs.Contact csContact) {
+    //##For now for testing
+    csContacts.removeWhere((contact) => contact.displayName![0] != ('G') && contact.displayName![0] != ('I') && contact.displayName![0] != ('O')); //##docelowo usunąć - tylko na potrzeby testów, żeby zmniejszyć liczbę kontaktów
+    List<Contact> result = csContacts.map((cs.Contact csContact) {
       return Contact.fromJson({
         'id': csContact.phones![0].value,
         'name': csContact.displayName,
@@ -22,6 +22,9 @@ class ContactsApi {
         'isRegistered': true,
       });
     }).toList();
+    result[0].isRegistered = false;
+
+    return result;
   }
 
   Future<List<Contact>> getContacts() async {

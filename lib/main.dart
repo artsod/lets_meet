@@ -736,6 +736,12 @@ class _MapScreenState extends State<MapScreen> {
                   },
                 ),
                 ListTile(
+                  title: const Text("My meetings"),
+                  onTap: () {
+
+                  },
+                ),
+                ListTile(
                   title: const Text("Settings"),
                   onTap: () {
 
