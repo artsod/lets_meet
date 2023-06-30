@@ -8,10 +8,8 @@ import 'package:lets_meet/src/screens/contacts_screen.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as mt;
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:async';
+import '../api/api_client.dart';
 import 'organize_meeting_screen.dart';
-import '../api/api_current_meetings.dart';
-import '../api/api_favourite_places.dart';
-import '../api/api_contacts.dart';
 
 void main() {
   //debugPaintSizeEnabled = true;
@@ -35,7 +33,6 @@ class _MapScreenState extends State<MapScreen> {
   final Set<Marker> _markers = {};
   final bool _isMeetingInProgress = true; //Do ustawienia dynamicznie
   final String _favouritePlaceType = 'Plac zabaw'; //Do ustawienia dynamicznie w opcjach konta
-  FavouritePlaces favouritePlaces = FavouritePlaces();
   List<List<dynamic>> favouritePlacesList = [];
   String selectedPlaceType = 'Any';
   String enteredKeyword = '';
@@ -45,7 +42,7 @@ class _MapScreenState extends State<MapScreen> {
   );
   LatLng _tappedLocation = const LatLng(0,0);
   final Permission _permission = Permission.contacts;
-  final ContactsApi _contactsApi = ContactsApi();
+  final ApiClient _apiClient = ApiClient();
   List<Contact> _contactsList = [];
 
   @override
@@ -157,7 +154,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _showFavouritePlaces (BuildContext context) async {
-    favouritePlacesList = await favouritePlaces.getFavouritePlaces();
+    favouritePlacesList = await _apiClient.getFavouritePlaces();
 
     showModalBottomSheet(
       context: context,
@@ -249,12 +246,12 @@ class _MapScreenState extends State<MapScreen> {
 
   void removeFromFavourites(String placeID) {
     favouritePlacesList.removeWhere((row) => row[0] == placeID);
-    favouritePlaces.removeFromFavourites(favouritePlacesList);
+    _apiClient.removeFromFavourites(favouritePlacesList);
   }
 
   void addToFavourites (String placeID, double? lat, double? lng, String title, String? vicinity, String? icon) async {
     favouritePlacesList.add([placeID,lat,lng,title,vicinity,icon]);
-    favouritePlaces.addToFavourites(favouritePlacesList);
+    _apiClient.addToFavourites(favouritePlacesList);
   }
 
   void _searchOnTheMap (BuildContext context) async {
@@ -474,7 +471,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void showCurrentMeetings() async {
-    List<dynamic> listOfCurrentMeetings = await CurrentMeetings().getCurrentMeetings();
+    List<dynamic> listOfCurrentMeetings = await _apiClient.getCurrentMeetings();
 
     _markers.clear();
 
@@ -505,7 +502,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> initializeContacts() async {
-    _contactsList = await _contactsApi.getContactsLocal();
+    _contactsList = await _apiClient.getContactsLocal();
     setState(() {
 
     });

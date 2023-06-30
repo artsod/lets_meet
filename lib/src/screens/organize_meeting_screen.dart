@@ -5,7 +5,8 @@ import '../widgets/date_time_picker.dart';
 import '../widgets/attendees_list.dart';
 import '../screens/contacts_screen.dart';
 import '../model/contact.dart';
-import '../api/api_groups.dart';
+import '../model/group.dart';
+import '../api/api_client.dart';
 
 class OrganizeMeeting extends StatefulWidget {
   final PlaceDetails place;
@@ -156,7 +157,7 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
     }
 
     Future<void> initializeGroups() async {
-      _groupsList = await GroupsApi().getGroups();
+      _groupsList = await ApiClient().getGroups();
     }
 
     void navigateToAddGroups() async {

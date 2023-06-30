@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lets_meet/src/api/api_groups.dart';
+import '../api/api_client.dart';
 import '../model/contact.dart';
-import 'package:flutter_sms/flutter_sms.dart';
-
-
+import '../model/group.dart';
 
 class ContactsManagement extends StatefulWidget {
   final List<Contact> contactList;
@@ -20,7 +18,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
 
   List<Contact> _contactsList = [];
   late Function(List<Contact>) _updateContactsList;
-  GroupsApi groups = GroupsApi();
+  final ApiClient _apiClient = ApiClient();
   List<Group> _groupsList = [];
 
   @override
@@ -40,15 +38,10 @@ class _ContactsManagementState extends State<ContactsManagement> {
   }
 
   Future<void> initializeGroups() async {
-    _groupsList = await groups.getGroups();
+    _groupsList = await _apiClient.getGroups();
     setState(() {
 
     });
-  }
-
-  //##To powinna być w którymś API
-  void sendInvitation(String message, List<String> recipients) async {
-    String result = await sendSMS(message: message, recipients: recipients).catchError((onError) {});
   }
 
   //main structure widget - Scaffold
@@ -190,7 +183,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
                                   child: const Text('Continue'),
                                   onPressed: () {
                                     //##Tutaj wstawić logikę wysyłania zaproszenia w back-endzie
-                                    sendInvitation('Hi! Check out MeetMeThere app where you can easily notify your friends where they can meet you. Here\'s the link: TUTAJ LINK', [contacts[index].phoneNumber]);
+                                    _apiClient.sendInvitation('Hi! Check out MeetMeThere app where you can easily notify your friends where they can meet you. Here\'s the link: TUTAJ LINK', [contacts[index].phoneNumber]);
                                     setState(() {
 
                                     });
@@ -325,7 +318,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
                                   },
                                 ),
                                 TextButton(
-                                  child: Text('Create'),
+                                  child: const Text('Create'),
                                   onPressed: () {
                                     if (groupName.isNotEmpty) {
                                       if (groupType == 'Private') {
@@ -345,7 +338,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
                   );
                   if (newGroup != null) {
                     //##Tutaj dodać logikę dodawania grupy w back-endzie
-                    groups.addGroup();
+                    _apiClient.addGroup();
                     setState(() {
                       _groupsList.add(newGroup);
                     });
@@ -418,7 +411,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
                                       style: TextStyle(color: Colors.red)),
                                   onPressed: () {
                                     //##Tutaj wstawić logikę usuwania grupy w back-endzie
-                                    groups.removeGroup();
+                                    _apiClient.removeGroup();
                                     setState(() {
                                       _groupsList.removeWhere((element) => element.name == group[index].name);
                                     });
@@ -469,7 +462,7 @@ class GroupContactsScreen extends StatefulWidget {
 }
 
 class _GroupContactsScreenState extends State<GroupContactsScreen> {
-  GroupsApi groupContact = GroupsApi();
+  final ApiClient _apiClient = ApiClient();
   List<GroupContacts> _groupContactsMapping = [];
   List<Contact> _groupContactsList = [];
   List<Contact> _contactsList = [];
@@ -481,7 +474,7 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
   }
 
   Future<void> initializeGroupContacts() async {
-    _groupContactsMapping = await groupContact.getGroupContacts();
+    _groupContactsMapping = await _apiClient.getGroupContacts();
     _groupContactsMapping = _groupContactsMapping.where((contact) => contact.name == widget.groupList[widget.index].name).toList();
     _contactsList = widget.contactsList;
     _groupContactsList = _contactsList.where((contact) => _groupContactsMapping.any((groupContacts) => contact.id == groupContacts.contactId)).toList();
@@ -507,7 +500,7 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
                     title: const Text('Enter new name'),
                     content: TextField(
                       controller: TextEditingController(text: widget.groupList[widget.index].name),
-                      decoration: InputDecoration(labelText: 'Group Name'),
+                      decoration: const InputDecoration(labelText: 'Group Name'),
                       onChanged: (value) {
                         userInput = value;
                       },
@@ -533,7 +526,7 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
 
               if (input != null) {
                 // ##Tutaj powinna być logika edycji grupy w backendzie
-                groupContact.editGroup();
+                _apiClient.editGroup();
                 widget.groupList[widget.index].name = input;
                 widget.renameGroup(widget.groupList);
                 setState(() {});
@@ -570,7 +563,7 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
                       icon: const Icon(Icons.delete),
                       onPressed: () {
                         //##Tutaj wstawić logikę usuwania kontaktu z grupy w back-endzie
-                        groupContact.removeContactFromGroup();
+                        _apiClient.removeContactFromGroup();
                         setState(() {
                           _groupContactsList.remove(contact);
                         });
@@ -604,7 +597,7 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
 
     if (selectedContacts != null && selectedContacts.isNotEmpty) {
       //##Tutaj wstawić logikę dodawania kontaktu do grupy w back-endzie
-      groupContact.addContactToGroup();
+      _apiClient.addContactToGroup();
       setState(() {
         _groupContactsList.addAll(selectedContacts);
       });
@@ -624,6 +617,7 @@ class AddContactsListScreen extends StatefulWidget {
 class _AddContactsListScreenState extends State<AddContactsListScreen> {
   List<Contact> _addableContactsList = [];
   List<Contact> _nonAddableContactsList = [];
+  final ApiClient _apiClient = ApiClient();
 
   @override
   void initState() {
@@ -641,10 +635,6 @@ class _AddContactsListScreenState extends State<AddContactsListScreen> {
     setState(() {
 
     });
-  }
-
-  void sendInvitation(String message, List<String> recipients) async {
-    String result = await sendSMS(message: message, recipients: recipients).catchError((onError) {});
   }
 
   final List<Contact> _selectedContacts = [];
@@ -763,7 +753,7 @@ class _AddContactsListScreenState extends State<AddContactsListScreen> {
                                     child: const Text('Continue'),
                                     onPressed: () {
                                       //##Tutaj wstawić logikę wysyłania zaproszenia w back-endzie
-                                      sendInvitation(
+                                      _apiClient.sendInvitation(
                                           'Hi! Check out MeetMeThere app where you can easily notify your friends where they can meet you. Here\'s the link: TUTAJ LINK',
                                           [contacts[index].phoneNumber]);
                                       setState(() {
