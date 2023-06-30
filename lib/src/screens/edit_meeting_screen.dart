@@ -20,7 +20,6 @@ class _EditMeetingState extends State<EditMeeting> {
   final bool _meetingStarted;
   final String _headerText;
   Duration _duration = const Duration();
-  final Color color = Colors.orange.shade700;
   final DateTime _selectedDateTime = DateTime.now();
 
   _EditMeetingState(this.place, this._meetingStarted, this._headerText);
@@ -72,7 +71,7 @@ class _EditMeetingState extends State<EditMeeting> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
-                color: color,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
@@ -82,9 +81,6 @@ class _EditMeetingState extends State<EditMeeting> {
               )
           ),
           ElevatedButton(
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Colors.grey),
-              ),
               onPressed: !_meetingStarted ? () => {} : null,
               child: const Text('Change', style: TextStyle(fontSize: 10))
           ),
@@ -101,7 +97,7 @@ class _EditMeetingState extends State<EditMeeting> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w400,
-              color: color,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
           DurationPicker(
@@ -127,7 +123,7 @@ class _EditMeetingState extends State<EditMeeting> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
-                color: color,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
@@ -150,7 +146,7 @@ class _EditMeetingState extends State<EditMeeting> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
-                    color: color,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ]
@@ -170,9 +166,6 @@ class _EditMeetingState extends State<EditMeeting> {
         const SizedBox(width: 20),
         Expanded(
           child: ElevatedButton(
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(color),
-              ),
               onPressed: () => {
 
               },
@@ -182,9 +175,7 @@ class _EditMeetingState extends State<EditMeeting> {
         const SizedBox(width: 20),
         Expanded(child:
           ElevatedButton(
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Colors.grey),
-              ),
+              style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(Colors.grey)),
               onPressed: () {Navigator.pop(context);},
               child: const Text('Cancel', style: TextStyle(fontSize: 10))
           ),
@@ -196,7 +187,6 @@ class _EditMeetingState extends State<EditMeeting> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_headerText),
-        backgroundColor: color,
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.start,

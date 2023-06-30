@@ -13,7 +13,6 @@ class MeetingInProgress extends StatefulWidget {
 class _MeetingInProgressState extends State<MeetingInProgress> {
 
   PlaceDetails place;
-  final Color color = Colors.orange.shade700;
   final DateTime _selectedDateTime = DateTime.now();
 
   _MeetingInProgressState(this.place);
@@ -52,12 +51,11 @@ class _MeetingInProgressState extends State<MeetingInProgress> {
     Widget timeSection = Column(
       children: [
         Row(
-            children: [
+            children: const [
               Text('Your meeting is scheduled until:',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
-                  color: color,
                 ),
               ),
             ]
@@ -70,12 +68,11 @@ class _MeetingInProgressState extends State<MeetingInProgress> {
     Widget contactsSection = Column(
       children: [
         Row(
-            children: [
+            children: const [
               Text('People that wanted to meet with you here',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
-                  color: color,
                 ),
               ),
             ]
@@ -94,9 +91,6 @@ class _MeetingInProgressState extends State<MeetingInProgress> {
         const SizedBox(width: 20),
         Expanded(
           child: ElevatedButton(
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(color),
-              ),
               onPressed: () => {
 
               },
@@ -106,9 +100,6 @@ class _MeetingInProgressState extends State<MeetingInProgress> {
         const SizedBox(width: 20),
         Expanded(child:
           ElevatedButton(
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Colors.grey),
-              ),
               onPressed: () {Navigator.pop(context);},
               child: const Text('Cancel', style: TextStyle(fontSize: 10))
           ),
@@ -120,7 +111,6 @@ class _MeetingInProgressState extends State<MeetingInProgress> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('You\'re currently in the meeting'),
-        backgroundColor: color,
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.start,

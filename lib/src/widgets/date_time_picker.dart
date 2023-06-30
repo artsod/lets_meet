@@ -12,8 +12,7 @@ class DateTimePicker extends StatefulWidget {
 
 class _DateTimePickerState extends State<DateTimePicker> {
   late DateTime _dateTime;
-  final Color _color = Colors.orange.shade700;
-  //Locale myLocale = Localizations.localeOf(this.context); //Implement later
+  //##Locale myLocale = Localizations.localeOf(this.context); //Implement later
 
   @override
   void initState() {
@@ -48,11 +47,11 @@ class _DateTimePickerState extends State<DateTimePicker> {
           return Theme(
             data: Theme.of(context).copyWith(
               colorScheme: ColorScheme.light(
-                primary: _color, //
+                primary: Theme.of(context).colorScheme.primary, //
               ),
               textButtonTheme: TextButtonThemeData(
                 style: TextButton.styleFrom(
-                  foregroundColor: _color, // button text color
+                  foregroundColor: Theme.of(context).colorScheme.primary, // button text color
                 ),
               ),
             ),
@@ -68,22 +67,8 @@ class _DateTimePickerState extends State<DateTimePicker> {
             return Theme(
               data: ThemeData(
                   colorScheme: ColorScheme.light(
-                    primary: _color,
+                    primary: Theme.of(context).colorScheme.primary,
                   ),
-                  textButtonTheme: TextButtonThemeData(
-                    style: ButtonStyle(
-                        foregroundColor: MaterialStateProperty.all(_color)),
-                  ),
-                  timePickerTheme: TimePickerThemeData(
-                      dialHandColor: _color,
-                      dialBackgroundColor: Colors.white,
-                      hourMinuteTextColor: _color,
-                      entryModeIconColor: _color,
-                      inputDecorationTheme: const InputDecorationTheme(
-                        enabledBorder: InputBorder.none,
-                        filled: true,
-                      )
-                  )
               ),
               child: MediaQuery(
                 data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),

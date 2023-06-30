@@ -20,7 +20,6 @@ class OrganizeMeeting extends StatefulWidget {
 class _OrganizeMeetingState extends State<OrganizeMeeting> {
 
   late PlaceDetails place = widget.place;
-  final Color color = Colors.orange.shade700;
   late String _startMeetingText = 'Let\'s meet here now';
   bool startNow=true;
   DateTime _selectedDateTime = DateTime.now();
@@ -67,12 +66,12 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w400,
-            color: color,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
         Switch(
           value: startNow,
-          activeColor: Colors.orange.shade700,
+          activeColor: Theme.of(context).colorScheme.primary,
           onChanged: (bool value) {
             setState(() {
               startNow = value;
@@ -100,7 +99,7 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
-                    color: color,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ),
@@ -125,7 +124,7 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w400,
-            color: color,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
         DurationPicker(
@@ -186,13 +185,12 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
-                  color: color,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
               const SizedBox(width: 10),
               ElevatedButton(
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(color),
                     padding: MaterialStateProperty.all<EdgeInsets>(const EdgeInsets.all(2.0)),
                     minimumSize: MaterialStateProperty.all<Size>(const Size(70, 25)),
                   ),
@@ -204,7 +202,6 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
               const SizedBox(width: 10),
               ElevatedButton(
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(color),
                     padding: MaterialStateProperty.all<EdgeInsets>(const EdgeInsets.all(2.0)),
                     minimumSize: MaterialStateProperty.all<Size>(const Size(70, 25)),
                   ),
@@ -245,9 +242,6 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
           const SizedBox(width: 20),
           Expanded(
             child: ElevatedButton(
-                style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(color),
-                ),
                 onPressed: () => {
 
                 },
@@ -258,9 +252,7 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
           Expanded(
             child:
             ElevatedButton(
-                style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(Colors.grey),
-                ),
+                style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(Colors.grey)),
                 onPressed: () {Navigator.pop(context);},
                 child: const Text('Cancel', style: TextStyle(fontSize: 10))
             ),
@@ -273,7 +265,6 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Let\'s meet here'),
-        backgroundColor: color,
       ),
       body: Column(
         children: [

@@ -22,8 +22,6 @@ class _ContactsManagementState extends State<ContactsManagement> {
   late Function(List<Contact>) _updateContactsList;
   GroupsApi groups = GroupsApi();
   List<Group> _groupsList = [];
-  Color mainColor = Colors.orange.shade700;
-  Color secondaryColor = Colors.orange.shade100;
 
   @override
   void initState() {
@@ -50,11 +48,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
 
   //##To powinna być w którymś API
   void sendInvitation(String message, List<String> recipients) async {
-    String result = await sendSMS(message: message, recipients: recipients)
-        .catchError((onError) {
-      print(onError);
-    });
-    print(result);
+    String result = await sendSMS(message: message, recipients: recipients).catchError((onError) {});
   }
 
   //main structure widget - Scaffold
@@ -63,7 +57,6 @@ class _ContactsManagementState extends State<ContactsManagement> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Contacts and groups'),
-        backgroundColor: mainColor,
       ),
       body: Column(
         children: [
@@ -77,7 +70,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
                     });
                   },
                   child: Container(
-                    color: _showContacts ? mainColor : Colors.grey,
+                    color: _showContacts ? Theme.of(context).colorScheme.primary : Colors.grey,
                     padding: const EdgeInsets.all(8.0),
                     child: const Text(
                       'Contacts',
@@ -98,7 +91,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
                     });
                   },
                   child: Container(
-                    color: !_showContacts ? mainColor : Colors.grey,
+                    color: !_showContacts ? Theme.of(context).colorScheme.primary : Colors.grey,
                     padding: const EdgeInsets.all(8.0),
                     child: const Text(
                       'Groups',
@@ -164,8 +157,8 @@ class _ContactsManagementState extends State<ContactsManagement> {
           itemBuilder: (BuildContext context, int index) {
             return ListTile(
               leading: CircleAvatar(
-                  backgroundColor: secondaryColor,
-                  child: Text(contacts[index].name[0], style: TextStyle(color: mainColor))
+                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                  child: Text(contacts[index].name[0], style: TextStyle(color: Theme.of(context).colorScheme.primary))
               ),
               //leading: const Icon(Icons.account_box_outlined), //##docelowo powinna tutaj być jakaś ikonka usera
               title: Text(
@@ -177,7 +170,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
                 children: [
                   if (!contacts[index].isRegistered)
                     IconButton(
-                      icon: Icon(Icons.person_add, color: mainColor),
+                      icon: Icon(Icons.person_add, color: Theme.of(context).colorScheme.primary),
                       onPressed: () {
                         showDialog(
                           context: context,
@@ -194,8 +187,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
                                   },
                                 ),
                                 TextButton(
-                                  child: Text('Continue',
-                                      style: TextStyle(color: mainColor)),
+                                  child: const Text('Continue'),
                                   onPressed: () {
                                     //##Tutaj wstawić logikę wysyłania zaproszenia w back-endzie
                                     sendInvitation('Hi! Check out MeetMeThere app where you can easily notify your friends where they can meet you. Here\'s the link: TUTAJ LINK', [contacts[index].phoneNumber]);
@@ -295,20 +287,12 @@ class _ContactsManagementState extends State<ContactsManagement> {
                                         groupName = value;
                                       });
                                     },
-                                    decoration: InputDecoration(
-                                        labelText: 'Group Name',
-                                        floatingLabelStyle: TextStyle(
-                                            color: mainColor),
-                                        focusedBorder: UnderlineInputBorder(
-                                            borderSide: BorderSide(
-                                                color: mainColor))
-                                    ),
+                                    decoration: const InputDecoration(labelText: 'Group Name'),
                                   ),
                                   const SizedBox(height: 16),
                                   Row(
                                     children: [
                                       Radio<String>(
-                                        activeColor: mainColor,
                                         value: 'Private',
                                         groupValue: groupType,
                                         onChanged: (value) {
@@ -319,7 +303,6 @@ class _ContactsManagementState extends State<ContactsManagement> {
                                       ),
                                       const Text('Private'),
                                       Radio<String>(
-                                        activeColor: mainColor,
                                         value: 'Public',
                                         groupValue: groupType,
                                         onChanged: (value) {
@@ -342,8 +325,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
                                   },
                                 ),
                                 TextButton(
-                                  child: Text('Create',
-                                      style: TextStyle(color: mainColor)),
+                                  child: Text('Create'),
                                   onPressed: () {
                                     if (groupName.isNotEmpty) {
                                       if (groupType == 'Private') {
@@ -369,7 +351,6 @@ class _ContactsManagementState extends State<ContactsManagement> {
                     });
                   }
                 },
-                style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(mainColor)),
                 child: const Text('Create group')
             ),
           ),
@@ -492,7 +473,6 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
   List<GroupContacts> _groupContactsMapping = [];
   List<Contact> _groupContactsList = [];
   List<Contact> _contactsList = [];
-  Color mainColor = Colors.orange.shade700;
 
   @override
   void initState() {
@@ -510,14 +490,11 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
     });
   }
 
-  Color color = Colors.orange.shade700;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.groupList[widget.index].name),
-        backgroundColor: color,
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
@@ -530,14 +507,7 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
                     title: const Text('Enter new name'),
                     content: TextField(
                       controller: TextEditingController(text: widget.groupList[widget.index].name),
-                      decoration: InputDecoration(
-                          labelText: 'Group Name',
-                          floatingLabelStyle: TextStyle(
-                              color: mainColor),
-                          focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                  color: mainColor))
-                      ),
+                      decoration: InputDecoration(labelText: 'Group Name'),
                       onChanged: (value) {
                         userInput = value;
                       },
@@ -551,8 +521,7 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
                         },
                       ),
                       TextButton(
-                        child: Text('Rename',
-                            style: TextStyle(color: mainColor)),
+                        child: const Text('Rename'),
                         onPressed: () {
                           Navigator.of(context).pop(userInput);
                         },
@@ -618,9 +587,6 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
             onPressed: () {
               _navigateToAddContacts(_groupContactsList);
             },
-            style: ButtonStyle(
-              backgroundColor: MaterialStateProperty.all<Color>(color),
-            ),
             child: const Text('Add people'),
           ),
         ],
@@ -678,24 +644,16 @@ class _AddContactsListScreenState extends State<AddContactsListScreen> {
   }
 
   void sendInvitation(String message, List<String> recipients) async {
-    String result = await sendSMS(message: message, recipients: recipients)
-        .catchError((onError) {
-      print(onError);
-    });
-    print(result);
+    String result = await sendSMS(message: message, recipients: recipients).catchError((onError) {});
   }
 
   final List<Contact> _selectedContacts = [];
-
-  Color mainColor = Colors.orange.shade700;
-  Color secondaryColor = Colors.orange.shade100;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Contacts List'),
-        backgroundColor: mainColor,
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -715,9 +673,6 @@ class _AddContactsListScreenState extends State<AddContactsListScreen> {
               onPressed: () {
                 Navigator.pop(context, _selectedContacts);
               },
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(mainColor),
-              ),
               child: const Text('Add Selected Contacts'),
             ),
           ),
@@ -750,8 +705,8 @@ class _AddContactsListScreenState extends State<AddContactsListScreen> {
             if (addable) {
               return ListTile(
                 leading: CircleAvatar(
-                    backgroundColor: secondaryColor,
-                    child: Text(contacts[index].name[0], style: TextStyle(color: mainColor))
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                    child: Text(contacts[index].name[0], style: TextStyle(color: Theme.of(context).colorScheme.primary))
                 ),
                 //leading: const Icon(Icons.account_box_outlined), //##docelowo powinna tutaj być jakaś ikonka usera
                 title: Text(
@@ -773,9 +728,9 @@ class _AddContactsListScreenState extends State<AddContactsListScreen> {
             else {
               return ListTile(
                 leading: CircleAvatar(
-                    backgroundColor: secondaryColor,
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
                     child: Text(contacts[index].name[0],
-                        style: TextStyle(color: mainColor))
+                        style: TextStyle(color: Theme.of(context).colorScheme.primary))
                 ),
                 //leading: const Icon(Icons.account_box_outlined), //##docelowo powinna tutaj być jakaś ikonka usera
                 title: Text(
@@ -787,7 +742,7 @@ class _AddContactsListScreenState extends State<AddContactsListScreen> {
                   children: [
                     if (!contacts[index].isRegistered)
                       IconButton(
-                        icon: Icon(Icons.person_add, color: mainColor),
+                        icon: Icon(Icons.person_add, color: Theme.of(context).colorScheme.primary),
                         onPressed: () {
                           showDialog(
                             context: context,
@@ -805,8 +760,7 @@ class _AddContactsListScreenState extends State<AddContactsListScreen> {
                                     },
                                   ),
                                   TextButton(
-                                    child: Text('Continue',
-                                        style: TextStyle(color: mainColor)),
+                                    child: const Text('Continue'),
                                     onPressed: () {
                                       //##Tutaj wstawić logikę wysyłania zaproszenia w back-endzie
                                       sendInvitation(
@@ -863,14 +817,11 @@ class _AddGroupsListScreenState extends State<AddGroupsListScreen> {
 
   final List<Group> _selectedGroups = [];
 
-  Color color = Colors.orange.shade700;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Groups List'),
-        backgroundColor: color,
       ),
       body: Column(
         children: [
@@ -901,9 +852,6 @@ class _AddGroupsListScreenState extends State<AddGroupsListScreen> {
             onPressed: () {
               Navigator.pop(context, _selectedGroups);
             },
-            style: ButtonStyle(
-              backgroundColor: MaterialStateProperty.all<Color>(color),
-            ),
             child: const Text('Add Selected Groups'),
           ),
         ],
