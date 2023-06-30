@@ -1,0 +1,98 @@
+[
+  {
+    "name": "Private Group 1",
+    "contactId": "1"
+  },
+  {
+    "name": "Private Group 1",
+    "contactId": "2"
+  },
+  {
+    "name": "Private Group 2",
+    "contactId": "1"
+  },
+  {
+    "name": "Private Group 2",
+    "contactId": "3"
+  },
+  {
+    "name": "Private Group 3",
+    "contactId": "4"
+  },
+  {
+    "name": "Private Group 3",
+    "contactId": "5"
+  },
+  {
+    "name": "Private Group 4",
+    "contactId": "2"
+  },
+  {
+    "name": "Private Group 4",
+    "contactId": "7"
+  },
+  {
+    "name": "Public Group 1",
+    "contactId": "1"
+  },
+  {
+    "name": "Public Group 1",
+    "contactId": "3"
+  },
+  {
+    "name": "Public Group 2",
+    "contactId": "8"
+  },
+  {
+    "name": "Public Group 2",
+    "contactId": "12"
+  },
+  {
+    "name": "Public Group 3",
+    "contactId": "3"
+  },
+  {
+    "name": "Public Group 3",
+    "contactId": "12"
+  },
+  {
+    "name": "Public Group 4",
+    "contactId": "2"
+  },
+  {
+    "name": "Public Group 4",
+    "contactId": "11"
+  },
+  {
+    "name": "Public Group 5",
+    "contactId": "10"
+  },
+  {
+    "name": "Public Group 5",
+    "contactId": "4"
+  },
+  {
+    "name": "Public Group 6",
+    "contactId": "5"
+  },
+  {
+    "name": "Public Group 6",
+    "contactId": "8"
+  },
+  {
+    "name": "Public Group 7",
+    "contactId": "1"
+  },
+  {
+    "name": "Public Group 7",
+    "contactId": "6"
+  },
+  {
+    "name": "Public Group 8",
+    "contactId": "10"
+  },
+  {
+    "name": "Public Group 8",
+    "contactId": "2"
+  }
+]

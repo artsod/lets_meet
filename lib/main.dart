@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
 import 'package:google_maps_webservice/places.dart';
+import 'package:lets_meet/src/model/contact.dart';
 import 'package:lets_meet/src/screens/edit_meeting_screen.dart';
+import 'package:lets_meet/src/screens/contacts_screen.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as mt;
 import 'src/screens/organize_meeting_screen.dart';
 import 'src/api/api_current_meetings.dart';
 import 'dart:async';
 import 'src/api/api_favourite_places.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'src/api/api_contacts.dart';
 
 // Uncomment lines 3 and 6 to view the visual layout at runtime.
 //import 'package:flutter/rendering.dart' show debugPaintSizeEnabled;
@@ -43,6 +47,25 @@ class _MapScreenState extends State<MapScreen> {
     zoom: 12,
   );
   LatLng _tappedLocation = const LatLng(0,0);
+  Color mainColor = Colors.orange.shade700;
+  Color secondaryColor = Colors.orange.shade100;
+  final Permission _permission = Permission.contacts;
+  final ContactsApi _contactsApi = ContactsApi();
+  List<Contact> _contactsList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    initializeContacts();
+  }
+
+  Future<void> requestPermission() async {
+    final status = await _permission.request();
+
+    setState(() {
+
+    });
+  }
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
@@ -138,12 +161,11 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  void _showFavouritePlaces () async {
+  void _showFavouritePlaces (BuildContext context) async {
     favouritePlacesList = await favouritePlaces.getFavouritePlaces();
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.orange.shade100,
       builder: (BuildContext context) {
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -196,7 +218,7 @@ class _MapScreenState extends State<MapScreen> {
                               removeFromFavourites(favouritePlacesList[index][0]);
                               _markers.clear();
                               Navigator.pop(context);
-                              _showFavouritePlaces();
+                              _showFavouritePlaces(context);
                             });
                           },
                           child: const Text('Remove',
@@ -217,10 +239,6 @@ class _MapScreenState extends State<MapScreen> {
                 Expanded(
                   child:
                   ElevatedButton(
-                      style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all<Color>(
-                            Colors.orange.shade700),
-                      ),
                       onPressed: () {
                         Navigator.pop(context);
                       },
@@ -247,7 +265,7 @@ class _MapScreenState extends State<MapScreen> {
     favouritePlaces.addToFavourites(favouritePlacesList);
   }
 
-  void _searchOnTheMap () async {
+  void _searchOnTheMap (BuildContext context) async {
     final List<String> placeTypes = [//##Docelowo do przemyślenia czy ma być na stałe czy dynamicznie i czy dopuszczamy wszystkie z googla
       'Any',
       'cafe',
@@ -259,7 +277,6 @@ class _MapScreenState extends State<MapScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.orange.shade100,
       builder: (BuildContext context) {
         return Container(
           padding: EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0, bottom: MediaQuery.of(context).viewInsets.bottom),
@@ -348,10 +365,6 @@ class _MapScreenState extends State<MapScreen> {
                   const SizedBox(width: 20),
                   Expanded(
                     child: ElevatedButton(
-                        style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
-                              Colors.orange.shade700),
-                        ),
                         onPressed: () {
                           Navigator.pop(context);
                          _getPlaces(selectedPlaceType, enteredKeyword);
@@ -387,11 +400,10 @@ class _MapScreenState extends State<MapScreen> {
   void _modalOrganizeMeeting (PlaceDetails details) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.orange.shade100,
+      backgroundColor: secondaryColor,
       builder: (BuildContext context) {
         return Column(
           mainAxisSize: MainAxisSize.min,
-
           children: <Widget>[
             ListTile(
               leading: CircleAvatar(
@@ -406,35 +418,29 @@ class _MapScreenState extends State<MapScreen> {
                 const SizedBox(width: 20),
                 Expanded(
                   child: ElevatedButton(
-                      style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all<Color>(
-                            Colors.orange.shade700),
-                      ),
-                      onPressed: () async =>
-                      {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                OrganizeMeeting(details),
-                          ),
+                    onPressed: () async =>
+                    {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              OrganizeMeeting(place: details, contactsList: _contactsList),
                         ),
-                      },
-                      child: const Text('Let\'s meet here',
-                          style: TextStyle(fontSize: 10))
+                      ),
+                    },
+                    style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(mainColor)),
+                    child: const Text('Let\'s meet here',
+                        style: TextStyle(fontSize: 10)),
                   ),
                 ),
                 const SizedBox(width: 20),
                 Expanded(
                   child:
                   ElevatedButton(
-                      style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all<Color>(
-                            Colors.orange.shade700),
-                      ),
                       onPressed: () async {
                         addToFavourites(details.placeId, details.geometry?.location.lat, details.geometry?.location.lng, details.name, details.vicinity, details.icon);
                       },
+                      style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(mainColor)),
                       child: const Text(
                           'Add to favourites', style: TextStyle(fontSize: 10))
                   ),
@@ -516,9 +522,45 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
+  Future<void> initializeContacts() async {
+    _contactsList = await _contactsApi.getContactsLocal();
+    setState(() {
+
+    });
+  }
+
+  Future<void> getPhoneContacts() async {
+    //_csContacts = await cs.ContactsService.getContacts(withThumbnails: true);
+
+    setState(() {
+
+    });
+  }
+
+  void updateContactsList(List<Contact> updatedList) {
+    setState(() {
+      _contactsList = updatedList;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData(
+        backgroundColor: secondaryColor,
+        primaryColor: mainColor,
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: mainColor,
+          ),
+        ),
+        radioTheme: RadioThemeData(
+          fillColor: MaterialStateProperty.all(mainColor),
+        ),
+        bottomSheetTheme: BottomSheetThemeData(
+          backgroundColor: secondaryColor
+        )
+      ),
       home: Scaffold(
         body: Stack(
             children: <Widget>[
@@ -551,7 +593,7 @@ class _MapScreenState extends State<MapScreen> {
                     left:20,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.orange.shade700,
+                        color: mainColor,
                         shape: BoxShape.circle,
                       ),
                       child: IconButton(
@@ -588,38 +630,26 @@ class _MapScreenState extends State<MapScreen> {
                         childAspectRatio: 4.7,
                         children: [
                           ElevatedButton(
-                              style: ButtonStyle(
-                                backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
-                              ),
                               onPressed: () {
                                 _getPlaces('point_of_interest',_favouritePlaceType);
                               },
                               child: Text('Search here for: $_favouritePlaceType', style: const TextStyle(fontSize: 10))
                           ),
                           ElevatedButton(
-                              style: ButtonStyle(
-                                backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
-                              ),
                               onPressed: () {
-                                _showFavouritePlaces();
+                                _showFavouritePlaces(context);
                               },
                               child: const Text('Your favourite places', style: TextStyle(fontSize: 10))
                           ),
                           ElevatedButton(
-                              style: ButtonStyle(
-                                backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
-                              ),
                               onPressed: () {
                                 showCurrentMeetings();
                               },
                               child: const Text('Find current meetings', style: TextStyle(fontSize: 10))
                           ),
                           ElevatedButton(
-                              style: ButtonStyle(
-                                backgroundColor: MaterialStateProperty.all<Color>(Colors.orange.shade700),
-                              ),
                               onPressed: () {
-                                _searchOnTheMap();
+                                _searchOnTheMap(context);
                               },
                               child: const Text('Search on the map', style: TextStyle(fontSize: 10))
                           ),
@@ -652,7 +682,7 @@ class _MapScreenState extends State<MapScreen> {
                             ),
                             Container(
                             decoration: BoxDecoration(
-                                color: Colors.orange.shade700,
+                                color: mainColor,
                                 shape: BoxShape.circle,
                               ),
                               child: IconButton(
@@ -689,12 +719,24 @@ class _MapScreenState extends State<MapScreen> {
               children: <Widget>[
                 DrawerHeader(
                   decoration: BoxDecoration(
-                    color: Colors.orange.shade700,
+                    color: mainColor,
                   ),
                   child: const Text("Hi Marcin"),
                 ),
                 ListTile(
-                  title: const Text("Manage contacts"),
+                  title: const Text("Contacts and groups"),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ContactsManagement(contactList: _contactsList, updateContactsList: updateContactsList),
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  title: const Text("My meetings"),
                   onTap: () {
 
                   },

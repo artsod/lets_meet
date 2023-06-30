@@ -1,28 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_webservice/places.dart';
-import 'package:intl/intl.dart';
 import '../widgets/duration_picker.dart';
-
+import '../widgets/date_time_picker.dart';
+import '../widgets/attendees_list.dart';
+import '../screens/contacts_screen.dart';
+import '../model/contact.dart';
+import '../api/api_groups.dart';
 
 class OrganizeMeeting extends StatefulWidget {
   final PlaceDetails place;
+  final List<Contact> contactsList;
 
-  OrganizeMeeting(this.place);
+  const OrganizeMeeting({super.key, required this.place, required this.contactsList});
 
   @override
-  _OrganizeMeetingState createState() => _OrganizeMeetingState(place);
+  _OrganizeMeetingState createState() => _OrganizeMeetingState();
 }
 
 class _OrganizeMeetingState extends State<OrganizeMeeting> {
 
-  final PlaceDetails place;
+  late PlaceDetails place = widget.place;
   final Color color = Colors.orange.shade700;
   late String _startMeetingText = 'Let\'s meet here now';
   bool startNow=true;
   DateTime _selectedDateTime = DateTime.now();
   Duration _duration = const Duration();
-
-  _OrganizeMeetingState(this.place);
+  final List<Contact> _contactsInMeeting = [];
+  List<Group> _groupsList = [];
+  final List<Group> _groupsInMeeting = [];
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +38,6 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /*2*/
               Container(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
@@ -85,26 +89,31 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
 
     Widget timeSection = Visibility(
       visible: !startNow,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: [
-          Container(
-            width: 170,
-            child: Text('Select when will you be here',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: color,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SizedBox(
+                width: 170,
+                child: Text('Select when will you be here',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: color,
+                  ),
+                ),
               ),
-            ),
+              DateTimePicker(
+                onChanged: (dateTime) {
+                  setState(() {
+                    _selectedDateTime = dateTime;
+                  });
+                },
+              ),
+            ],
           ),
-          DateTimePicker(
-            onChanged: (dateTime) {
-              setState(() {
-                _selectedDateTime = dateTime;
-              });
-            },
-          ),
+          const SizedBox(height: 10),
         ],
       ),
     );
@@ -130,63 +139,135 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
       ],
     );
 
+    void navigateToAddContacts() async {
+      List<Contact>? selectedContacts = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AddContactsListScreen(contactsList: widget.contactsList, contactsToExclude: _contactsInMeeting),
+        ),
+      );
+
+      if (selectedContacts != null && selectedContacts.isNotEmpty) {
+        //##Tutaj wstawić logikę dodawania ludzi do spotkania w back-endzie
+        //##.addContactToMeeting();
+        setState(() {
+          _contactsInMeeting.addAll(selectedContacts);
+        });
+      }
+    }
+
+    Future<void> initializeGroups() async {
+      _groupsList = await GroupsApi().getGroups();
+    }
+
+    void navigateToAddGroups() async {
+      List<Group>? selectedGroups = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AddGroupsListScreen(groupsList: _groupsList, groupsToExclude: _groupsInMeeting),
+        ),
+      );
+
+      if (selectedGroups != null && selectedGroups.isNotEmpty) {
+        //##Tutaj wstawić logikę dodawania grup do spotkania w back-endzie
+        //##.addGroupToMeeting();
+        setState(() {
+          _groupsInMeeting.addAll(selectedGroups);
+        });
+      }
+    }
+
     Widget contactsSection = Column(
-        children: [
-          Row(
-              children: [
-                Text('With whom would you like to meet?',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: color,
-                  ),
-                ),
-              ]
-          ),
-          Row(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
+              Text('With whom would you like to meet?',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: color,
+                ),
+              ),
+              const SizedBox(width: 10),
               ElevatedButton(
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all<Color>(color),
+                    padding: MaterialStateProperty.all<EdgeInsets>(const EdgeInsets.all(2.0)),
+                    minimumSize: MaterialStateProperty.all<Size>(const Size(70, 25)),
                   ),
-                  onPressed: () => {
-
+                  onPressed: () {
+                    navigateToAddContacts();
                   },
-                  child: Text('Select people', style: TextStyle(fontSize: 10))
+                  child: const Text('Add people', style: TextStyle(fontSize: 10))
               ),
-              Text('People you have selected'),
-            ],
+              const SizedBox(width: 10),
+              ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all<Color>(color),
+                    padding: MaterialStateProperty.all<EdgeInsets>(const EdgeInsets.all(2.0)),
+                    minimumSize: MaterialStateProperty.all<Size>(const Size(70, 25)),
+                  ),
+                  onPressed: () {
+                    initializeGroups();
+                    navigateToAddGroups();
+                  },
+                  child: const Text('Add groups', style: TextStyle(fontSize: 10))
+              ),
+            ]
+        ),
+        if ((_contactsInMeeting.isEmpty && _groupsInMeeting.isEmpty))
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              'You haven\'t invited anyone yet',
+              style: TextStyle(color: Colors.grey),
+            ),
           ),
-        ],
+        Row(
+          children: [
+            AttendeesList(attendeesList: _contactsInMeeting),
+          ],
+        ),
+        Row(
+          children: [
+            AttendeesList(attendeesList: _groupsInMeeting),
+          ],
+        ),
+      ],
     );
 
-    Widget buttonSection = Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        const SizedBox(width: 20),
-        Expanded(
-          child: ElevatedButton(
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(color),
-              ),
-              onPressed: () => {
+    Widget buttonSection = Align(
+      alignment: Alignment.bottomCenter,
+      child:Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          const SizedBox(width: 20),
+          Expanded(
+            child: ElevatedButton(
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all<Color>(color),
+                ),
+                onPressed: () => {
 
-              },
-              child: Text(_startMeetingText, style: TextStyle(fontSize: 10))
+                },
+                child: Text(_startMeetingText, style: const TextStyle(fontSize: 10))
+            ),
           ),
-        ),
-        const SizedBox(width: 20),
-        Expanded(child:
-          ElevatedButton(
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Colors.grey),
-              ),
-              onPressed: () {Navigator.pop(context);},
-              child: const Text('Cancel', style: TextStyle(fontSize: 10))
+          const SizedBox(width: 20),
+          Expanded(
+            child:
+            ElevatedButton(
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all<Color>(Colors.grey),
+                ),
+                onPressed: () {Navigator.pop(context);},
+                child: const Text('Cancel', style: TextStyle(fontSize: 10))
+            ),
           ),
-        ),
-        const SizedBox(width: 20),
-      ],
+          const SizedBox(width: 20),
+        ],
+      ),
     );
 
     return Scaffold(
@@ -195,140 +276,44 @@ class _OrganizeMeetingState extends State<OrganizeMeeting> {
         backgroundColor: color,
       ),
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Image.network('https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&photo_reference=${place.photos.first.photoReference}&key=AIzaSyDWBhV1GqMnWxUjMDHiGHLNqvuthU8nUcE',
-            width:600,
-            height:240,
-                fit: BoxFit.cover,
-          ),
-          Container(
-            padding: EdgeInsets.all(32),
-            child: Column(
-              children: [
-                titleSection,
-                switchSection,
-                timeSection,
-                durationSection,
-                contactsSection,
-                buttonSection,
-              ],
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  if (place.photos.isNotEmpty)
+                    Image.network('https://maps.googleapis.com/maps/api/place/photo?maxwidth=500&photo_reference=${place.photos.first.photoReference}&key=AIzaSyDWBhV1GqMnWxUjMDHiGHLNqvuthU8nUcE',
+                      width:500,
+                      height:240,
+                      fit: BoxFit.cover,
+                    )
+                  else
+                    Image.asset(
+                      'assets/no_photo.jpg',//##zdjęcie z depositphotos bez licencji, zmienić później
+                      width: 500,
+                      height: 240,
+                      fit:BoxFit.cover,
+                    ),
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        titleSection,
+                        switchSection,
+                        timeSection,
+                        durationSection,
+                        contactsSection,
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
+          buttonSection,
         ],
       ),
     );
-  }
-}
-
-class DateTimePicker extends StatefulWidget {
-  final Function(DateTime) onChanged;
-
-  const DateTimePicker({Key? key, required this.onChanged}) : super(key: key);
-
-  @override
-  _DateTimePickerState createState() => _DateTimePickerState();
-}
-
-class _DateTimePickerState extends State<DateTimePicker> {
-  late DateTime _dateTime;
-  final Color _color=Colors.orange.shade700;
-  //Locale myLocale = Localizations.localeOf(this.context); //Implement later
-
-  @override
-  void initState() {
-    super.initState();
-    _dateTime = DateTime.now();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: _showDateTimePicker,
-      child: Container(
-        padding: EdgeInsets.all(5),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.calendar_today),
-            SizedBox(width: 12),
-            Text(_formatDateTime(_dateTime)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showDateTimePicker() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: _dateTime,
-      firstDate: DateTime(2023),
-      lastDate: DateTime(2030),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: _color, // <-- SEE HERE
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: _color, // button text color
-              ),
-            ),
-          ),
-          child: child!,
-        );
-      }
-    );
-    if (date != null) {
-      final time = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(_dateTime),
-        //Find a way to merge those two builders to format time picker
-        /*builder: (context, child) {
-          return Theme(
-            data: Theme.of(context).copyWith(
-              colorScheme: ColorScheme.light(
-                primary: _color, // <-- SEE HERE
-              ),
-              textButtonTheme: TextButtonThemeData(
-                style: TextButton.styleFrom(
-                  foregroundColor: _color, // button text color
-                ),
-              ),
-            ),
-            child: child!,
-          );
-        },*/
-        builder: (BuildContext context, Widget? child) {
-          return MediaQuery(
-            data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-            child: child!,
-          );
-        }
-      );
-      if (time != null) {
-        final dateTime = DateTime(
-          date.year,
-          date.month,
-          date.day,
-          time.hour,
-          time.minute,
-        );
-        setState(() {
-          _dateTime = dateTime;
-        });
-        widget.onChanged(dateTime);
-      }
-    }
-  }
-
-  String _formatDateTime(DateTime dateTime) {
-    //return DateFormat.yMd(myLocale.languageCode).format(now) //Implement later
-    return DateFormat('yyyy-MM-dd HH:mm').format(dateTime);
   }
 }
