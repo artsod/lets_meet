@@ -23,9 +23,10 @@ class _LoginScreenState extends State<LoginScreen> {
     String verificationCode = "111111";
 
     if (_verificationCodeController.text == verificationCode) {
-      Navigator.pushNamed(
-        context,
-        '/map',
+      Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/map',
+          ModalRoute.withName("/Home")
       );
     } else {
       showDialog(

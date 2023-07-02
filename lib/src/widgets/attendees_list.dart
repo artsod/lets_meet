@@ -48,6 +48,7 @@ class _AttendeesListState extends State<AttendeesList> {
       padding: const EdgeInsets.all(0.0),
       labelPadding: const EdgeInsets.only(top: -4.0, bottom: -4.0, left: 6.0),
       onDeleted: () {
+        FocusManager.instance.primaryFocus?.unfocus();
         setState(() {
           attendeesList.remove(attendee);
         });

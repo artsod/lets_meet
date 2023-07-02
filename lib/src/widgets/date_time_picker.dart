@@ -3,8 +3,9 @@ import 'package:intl/intl.dart';
 
 class DateTimePicker extends StatefulWidget {
   final Function(DateTime) onChanged;
+  final bool enabled;
 
-  const DateTimePicker({super.key, required this.onChanged});
+  const DateTimePicker({super.key, required this.onChanged, required this.enabled});
 
   @override
   _DateTimePickerState createState() => _DateTimePickerState();
@@ -23,14 +24,14 @@ class _DateTimePickerState extends State<DateTimePicker> {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: _showDateTimePicker,
+      onTap: widget.enabled ? _showDateTimePicker : null,
       child: Container(
         padding: const EdgeInsets.all(5),
         child: Row(
           children: [
-            Icon(Icons.calendar_today, size: 16),
+            Icon(Icons.calendar_today, size: 16, color: widget.enabled ? Colors.black : Colors.grey),
             const SizedBox(width: 6),
-            Text(_formatDateTime(_dateTime), style: const TextStyle(fontSize: 12)),
+            Text(_formatDateTime(_dateTime), style: TextStyle(fontSize: 12, color: widget.enabled ? Colors.black : Colors.grey)),
           ],
         ),
       ),
@@ -38,6 +39,7 @@ class _DateTimePickerState extends State<DateTimePicker> {
   }
 
   Future<void> _showDateTimePicker() async {
+    FocusManager.instance.primaryFocus?.unfocus();
     final date = await showDatePicker(
         context: context,
         initialDate: _dateTime,
@@ -66,9 +68,9 @@ class _DateTimePickerState extends State<DateTimePicker> {
           builder: (BuildContext context, Widget? child) {
             return Theme(
               data: ThemeData(
-                  colorScheme: ColorScheme.light(
-                    primary: Theme.of(context).colorScheme.primary,
-                  ),
+                colorScheme: ColorScheme.light(
+                  primary: Theme.of(context).colorScheme.primary,
+                ),
               ),
               child: MediaQuery(
                 data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
