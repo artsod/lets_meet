@@ -544,7 +544,6 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> getPhoneContacts() async {
     //_csContacts = await cs.ContactsService.getContacts(withThumbnails: true);
-
     setState(() {
 
     });
