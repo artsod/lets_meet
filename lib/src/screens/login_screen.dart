@@ -61,6 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const Text('Please enter the 6-digit verification code:'),
               const SizedBox(height: 16.0),
               TextFormField(
+                autofocus: true,
                 controller: _verificationCodeController,
                 keyboardType: TextInputType.number,
                 maxLength: 6,

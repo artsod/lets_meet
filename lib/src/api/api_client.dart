@@ -141,8 +141,7 @@ class ApiClient {
   Future<List<dynamic>> getCurrentMeetings() async {
     String csv = await rootBundle.loadString('assets/currentMeetings.csv');
 
-    List<dynamic> listOfCurrentMeetings = const CsvToListConverter().convert(
-        csv);
+    List<dynamic> listOfCurrentMeetings = const CsvToListConverter().convert(csv);
 
     return listOfCurrentMeetings;
   }
@@ -165,6 +164,16 @@ class ApiClient {
   void addToFavourites (List<List<dynamic>> favouritePlaces) async {
 
   }
+
+  Future<List<dynamic>> getPlaceTypesForSearch() async {
+    String csv = await rootBundle.loadString('assets/placeTypesForSearch.csv');
+
+    List<dynamic> placeTypes = const CsvToListConverter().convert(csv);
+
+    return placeTypes;
+  }
+
+
 
   //Old methods using local storage - remove when not needed anymore
   /*
