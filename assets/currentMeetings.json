@@ -1,0 +1,74 @@
+[
+  {
+    "place": {
+      "googlePlaceID": "ChIJ-eVnDB7oD0cRTobTaBciLuo",
+      "googlePlaceLatLng": {
+        "latitude": 51.1038301,
+        "longitude": 17.0938089
+      },
+      "ownName": "Plac Zabaw",
+      "ownIconUrl": "assets/defaultPlaceIcon.png"
+    },
+    "status": "Scheduled",
+    "owner": {
+      "id": "606994342",
+      "name": "Marcin Maciejasz",
+      "email": "johndoe@gmail.com",
+      "phoneNumber": "606994342",
+      "isRegistered": true
+    },
+    "startDateTime": "2023-07-26T15:30:00Z",
+    "duration": "3:05:00",
+    "participantsContacts": [],
+    "participantsGroups": [],
+    "comment": "This is a sample meeting comment."
+  },
+  {
+    "place": {
+      "googlePlaceID": "ChIJAAAAAAAAAAARU5Q9tt99shs",
+      "googlePlaceLatLng": {
+        "latitude": 51.10983470000001,
+        "longitude": 17.0993772
+      },
+      "ownName": "Górka saneczkowa",
+      "ownIconUrl": "assets/defaultPlaceIcon.png"
+    },
+    "status": "Scheduled",
+    "owner": {
+      "id": "606994342",
+      "name": "Marcin Maciejasz",
+      "email": "johndoe@gmail.com",
+      "phoneNumber": "606994342",
+      "isRegistered": true
+    },
+    "startDateTime": "2023-07-26T15:30:00Z",
+    "duration": "3:05:00",
+    "participantsContacts": [],
+    "participantsGroups": [],
+    "comment": "This is a sample meeting comment."
+  },
+  {
+    "place": {
+      "googlePlaceID": "ChIJAAAAAAAAAAARKWAQGjU70g4",
+      "googlePlaceLatLng": {
+        "latitude": 51.1102444,
+        "longitude": 17.1001557
+      },
+      "ownName": "Plac Zabaw",
+      "ownIconUrl": "assets/defaultPlaceIcon.png"
+    },
+    "status": "Scheduled",
+    "owner": {
+      "id": "606994342",
+      "name": "Marcin Maciejasz",
+      "email": "johndoe@gmail.com",
+      "phoneNumber": "606994342",
+      "isRegistered": true
+    },
+    "startDateTime": "2023-07-26T15:30:00Z",
+    "duration": "3:05:00",
+    "participantsContacts": [],
+    "participantsGroups": [],
+    "comment": "This is a sample meeting comment."
+  }
+]

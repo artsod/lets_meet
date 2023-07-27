@@ -13,13 +13,11 @@ enum ActionOnButton {New,Update,Cancel,End,Join,Decline,None}
 
 class MeetingScreen extends StatefulWidget {
   final NonCachableGooglePlace place;
-  final List<Contact> contactsList;
   final Meeting? meeting;
 
   const MeetingScreen({
     super.key,
     required this.place,
-    required this.contactsList,
     this.meeting
   });
 
@@ -28,7 +26,8 @@ class MeetingScreen extends StatefulWidget {
 }
 
 class _MeetingScreenState extends State<MeetingScreen> {
-
+//##Dodać nazwę spotkania
+  late List<Contact> _contactsList;
   //All default values for New meeting status. If meeting is passed (meaning status is different than New) all values are set in initState.
   late CachableGooglePlace _place;
   late Status _status=Status.Scheduled;
@@ -55,22 +54,20 @@ class _MeetingScreenState extends State<MeetingScreen> {
   late ActionOnButton _firstButtonAction;
   late ActionOnButton _secondButtonAction;
 
-
   @override
   void initState() {
     super.initState();
-    setMeetingVariables();
+    _setMeetingVariables();
     _textFieldFocusNode = FocusNode();
   }
 
   @override
   void dispose() {
-    // Clean up the focus node when the Form is disposed.
     _textFieldFocusNode.dispose();
     super.dispose();
   }
 
-  void setMeetingVariables() {
+  void _setMeetingVariables() {
     _place = CachableGooglePlace(
         googlePlaceID: widget.place.googlePlaceID,
         googlePlaceLatLng: widget.place.googlePlaceLatLng,
@@ -160,15 +157,19 @@ class _MeetingScreenState extends State<MeetingScreen> {
     }
   }
 
-  Future<void> initializeGroups() async {
+  void _initializaContacts() async {
+    _contactsList = await ApiClient().getContactsLocal();
+  }
+
+  void _initializeGroups() async {
     _groupsList = await ApiClient().getGroups();
   }
 
-  void navigateToAddContacts() async {
+  void _navigateToAddContacts() async {
     List<Contact>? selectedContacts = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddContactsListScreen(contactsList: widget.contactsList, contactsToExclude: _participantsContacts),
+        builder: (context) => AddContactsListScreen(contactsList: _contactsList, contactsToExclude: _participantsContacts),
       ),
     );
 
@@ -181,7 +182,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
     }
   }
 
-  void navigateToAddGroups() async {
+  void _navigateToAddGroups() async {
     List<Group>? selectedGroups = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -341,7 +342,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
                           minimumSize: MaterialStateProperty.all<Size>(const Size(70, 25)),
                           backgroundColor: _addParticipantsEnabled ? Theme.of(context).elevatedButtonTheme.style!.backgroundColor : MaterialStateProperty.all<Color>(Colors.grey),
                         ),
-                        onPressed: _addParticipantsEnabled ? () {_textFieldFocusNode.unfocus(); navigateToAddContacts();} : null,
+                        onPressed: _addParticipantsEnabled ? () {_textFieldFocusNode.unfocus(); _initializaContacts(); _navigateToAddContacts();} : null,
                         child: const Text('Add people', style: TextStyle(fontSize: 10))
                     ),
                     const SizedBox(width: 10),
@@ -351,7 +352,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
                           minimumSize: MaterialStateProperty.all<Size>(const Size(70, 25)),
                           backgroundColor: _addParticipantsEnabled ? Theme.of(context).elevatedButtonTheme.style!.backgroundColor : MaterialStateProperty.all<Color>(Colors.grey),
                         ),
-                        onPressed: _addParticipantsEnabled ? () {_textFieldFocusNode.unfocus(); initializeGroups(); navigateToAddGroups();} : null,
+                        onPressed: _addParticipantsEnabled ? () {_textFieldFocusNode.unfocus(); _initializeGroups(); _navigateToAddGroups();} : null,
                         child: const Text('Add groups', style: TextStyle(fontSize: 10))
                     ),
                   ]),

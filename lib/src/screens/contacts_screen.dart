@@ -4,10 +4,8 @@ import '../model/contact.dart';
 import '../model/group.dart';
 
 class ContactsManagement extends StatefulWidget {
-  final List<Contact> contactList;
-  final Function(List<Contact>) updateContactsList;
 
-  const ContactsManagement({super.key, required this.contactList, required this.updateContactsList});
+  const ContactsManagement({super.key});
 
   @override
   _ContactsManagementState createState() => _ContactsManagementState();
@@ -15,9 +13,7 @@ class ContactsManagement extends StatefulWidget {
 
 class _ContactsManagementState extends State<ContactsManagement> {
   bool _showContacts = true;
-
   List<Contact> _contactsList = [];
-  late Function(List<Contact>) _updateContactsList;
   final ApiClient _apiClient = ApiClient();
   List<Group> _groupsList = [];
 
@@ -29,9 +25,8 @@ class _ContactsManagementState extends State<ContactsManagement> {
   }
 
   Future<void> initializeContacts() async {
-    _contactsList = widget.contactList;
-    _updateContactsList = widget.updateContactsList;
-
+    //##dorobić kółeczko z czekaniem na wczytanie kontaktów
+    _contactsList = await _apiClient.getContactsLocal();
     setState(() {
 
     });
@@ -39,12 +34,8 @@ class _ContactsManagementState extends State<ContactsManagement> {
 
   Future<void> initializeGroups() async {
     _groupsList = await _apiClient.getGroups();
-    setState(() {
-
-    });
   }
 
-  //method for renaming group - passed as callback to other widgets
   void renameGroup(List<Group> updatedList) {
     setState(() {
       _groupsList = updatedList;

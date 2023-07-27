@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
 import 'package:google_maps_webservice/places.dart';
-import 'package:lets_meet/src/model/contact.dart';
 import 'package:lets_meet/src/screens/contacts_screen.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as mt;
 import 'package:permission_handler/permission_handler.dart';
@@ -10,8 +9,10 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:async';
 import '../api/api_client.dart';
 import '../model/place.dart';
+import '../model/meeting.dart';
 import '../widgets/favourites_list.dart';
 import '../widgets/search_map_box.dart';
+import '../widgets/bottom_place_menu.dart';
 import 'meeting_screen.dart';
 
 class MapScreen extends StatefulWidget {
@@ -24,19 +25,17 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
 
   late GoogleMapController _mapController;
-  final _places = GoogleMapsPlaces(apiKey: 'AIzaSyDWBhV1GqMnWxUjMDHiGHLNqvuthU8nUcE');
+  final GoogleMapsPlaces _places = GoogleMapsPlaces(apiKey: 'AIzaSyDWBhV1GqMnWxUjMDHiGHLNqvuthU8nUcE');
   final Set<Marker> _markers = {};
   final ApiClient _apiClient = ApiClient();
-  List<Contact> _contactsList = [];
   late CachableGooglePlace _currentPlace;
   late NonCachableGooglePlace _currentPlaceFull;
-  late PlaceDetails _currentPlaceDetails;
   List<CachableGooglePlace> _favouritePlacesList = [];
   String _selectedPlaceType = 'Any';
   String _enteredKeyword = '';
   late CameraPosition _currentCameraPosition;
-  final bool _isMeetingInProgress = true; //Do ustawienia dynamicznie
-  final Permission _permission = Permission.contacts;
+  bool _isMeetingInProgress = false; //Do ustawienia dynamicznie
+  final Permission _permissionContacts = Permission.contacts;
   DateTime _currentBackPressTime = DateTime.now();
 
 
@@ -46,6 +45,7 @@ class _MapScreenState extends State<MapScreen> {
     _initializeCameraPosition();
     _requestPermission();
     _initializePersonalData();
+    _checkMeetingInProgress();
   }
 
   void _initializeCameraPosition() { //##zrobić żeby zaciągało się z lokalizacji albo żeby można było ustawić w ustawieniach
@@ -56,33 +56,17 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _requestPermission() async {
-    final status = await _permission.request();
-
-    setState(() {
-
-    });
+    //##obsłużyć czekanie na zgodę
+    final status = await _permissionContacts.request();
   }
 
   Future<void> _initializePersonalData() async {
-    _contactsList = await _apiClient.getContactsLocal();
-    _favouritePlacesList = await _apiClient.getFavouritePlaces();
     //## Getting favourite place type should also be here
-    setState(() {
-
-    });
   }
 
-  Future<void> _getPhoneContacts() async {
-    //_csContacts = await cs.ContactsService.getContacts(withThumbnails: true);
-    setState(() {
-
-    });
-  }
-
-  void _updateContactsList(List<Contact> updatedList) {
-    setState(() {
-      _contactsList = updatedList;
-    });
+  void _checkMeetingInProgress() {
+    //##Zrobić sprawdzenie czy istnieje spotkanie w trakcie i tworzenie _currentPlaceFull jeśli istnieje
+    _isMeetingInProgress = true;
   }
 
   Future<bool> _onWillPop() {
@@ -145,7 +129,7 @@ class _MapScreenState extends State<MapScreen> {
     setState(() {
       _markers.clear();
       _markers.add(marker);
-      _modalOrganizeMeeting(place: _currentPlace);
+      _bottomPlaceMenu(place: _currentPlace);
     });
   }
 
@@ -187,7 +171,7 @@ class _MapScreenState extends State<MapScreen> {
                     ownName: result.name,
                     ownIconUrl: 'assets/defaultPlaceIcon.png'
                 );
-                _modalOrganizeMeeting(place: _currentPlace, searchResults: result);
+                _bottomPlaceMenu(place: _currentPlace, searchResult: result);
               },
             ));
           }
@@ -221,14 +205,16 @@ class _MapScreenState extends State<MapScreen> {
         ),
 
         onTap: () async {
-          _modalOrganizeMeeting(place: place);
+          _bottomPlaceMenu(place: place);
         },
       ));
       Navigator.pop(context);
     });
   }
 
-  void _showFavouritePlaces (BuildContext context) {
+  void _showFavouritePlaces (BuildContext context) async {
+    _favouritePlacesList = await _apiClient.getFavouritePlaces();
+
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
@@ -264,95 +250,14 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  Future<void> _buildFullCurrentPlace(CachableGooglePlace place) async {
-    _currentPlaceDetails = (await _places.getDetailsByPlaceId(place.googlePlaceID, fields: ['place_id','name','vicinity','photos','formatted_address'])).result;
-
-    _currentPlaceFull = NonCachableGooglePlace(
-        googlePlaceID: place.googlePlaceID,
-        googlePlaceLatLng: place.googlePlaceLatLng,
-        address: _currentPlaceDetails.formattedAddress ?? '',
-        googleName: place.ownName,
-        placePhotoReference: _currentPlaceDetails.photos.isNotEmpty ? _currentPlaceDetails.photos[0].photoReference : '',
-        vicinity: _currentPlaceDetails.vicinity ?? ''
-    );
-  }
-
-  void _modalOrganizeMeeting ({required CachableGooglePlace place, PlacesSearchResult? searchResults}) {
+  void _bottomPlaceMenu ({required CachableGooglePlace place, PlacesSearchResult? searchResult}) {
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            ListTile(
-              leading: CircleAvatar(
-                backgroundImage: AssetImage(place.ownIconUrl),
-              ),
-              title: Text(place.ownName),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                const SizedBox(width: 20),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      if (searchResults == null) {
-                        await _buildFullCurrentPlace(place);
-                      } else {
-                        _currentPlaceFull = NonCachableGooglePlace(
-                            googlePlaceID: place.googlePlaceID,
-                            googlePlaceLatLng: place.googlePlaceLatLng,
-                            address: searchResults.formattedAddress ?? '',
-                            googleName: place.ownName,
-                            placePhotoReference: searchResults.photos.isNotEmpty ? searchResults.photos[0].photoReference : '',
-                            vicinity: searchResults.vicinity ?? ''
-                        );
-                      }
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              MeetingScreen(place: _currentPlaceFull, contactsList: _contactsList),
-                        ),
-                      );
-                    },
-                    child: const Text('Let\'s meet here', style: TextStyle(fontSize: 10)),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child:
-                  ElevatedButton(
-                      onPressed: () async {
-                        //##Tutaj powinna być logika dodawania miejsca do ulubionych w back-nedzie
-                        //_apiClient.addToFavourites();
-                        _favouritePlacesList.add(CachableGooglePlace(
-                            googlePlaceID: place.googlePlaceID,
-                            googlePlaceLatLng: place.googlePlaceLatLng,
-                            ownName: place.ownName,
-                            ownIconUrl: 'assets/defaultPlaceIcon.png')
-                        );                      },
-                      child: const Text(
-                          'Add to favourites', style: TextStyle(fontSize: 10))
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child:
-                  ElevatedButton(
-                      style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(Colors.grey)),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                          'Cancel', style: TextStyle(fontSize: 10))
-                  ),
-                ),
-                const SizedBox(width: 20),
-              ],
-            ),
-          ],
+        return BottomPlaceMenu(
+            places: _places,
+            place: place,
+            searchResult: searchResult
         );
       },
     );
@@ -381,33 +286,39 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _showCurrentMeetings() async {
-    List<dynamic> listOfCurrentMeetings = await _apiClient.getCurrentMeetings();
+    List<Meeting> listOfCurrentMeetings = await _apiClient.getCurrentMeetings();
 
     _markers.clear();
 
-    for (var row in listOfCurrentMeetings) {
-      String placeID = row[0];
-      double lat = row[1];
-      double lng = row[2];
-      String name = row[3];
-      String vicinity = row[4];
+    if (listOfCurrentMeetings.isEmpty) {
+      Fluttertoast.showToast(
+          msg: 'There are no current meetings',
+          toastLength: Toast.LENGTH_SHORT,
+          backgroundColor: Colors.white,
+          textColor: Theme.of(context).colorScheme.primary,
+          fontSize: 20,
+          gravity: ToastGravity.BOTTOM
+      );
+    } else {
+      //##Dodać obsługę jeśli na markerze już istnieje spotkanie
+      for (var meeting in listOfCurrentMeetings) {
+        _markers.add(Marker(
+          markerId: MarkerId(meeting.place.googlePlaceID),
+          position: meeting.place.googlePlaceLatLng,
+          infoWindow: InfoWindow(
+            title: meeting.place.ownName,
+            //snippet: ##dodać meeting name, jak już będzie w modelu,
+          ),
 
-      _markers.add(Marker(
-        markerId: MarkerId(placeID),
-        position: LatLng(lat, lng),
-        infoWindow: InfoWindow(
-          title: name,
-          snippet: vicinity,
-        ),
-
-        onTap: () async {
-          //_modalOrganizeMeeting(placeDetails);
-        },
-      ));
+          onTap: () async {
+            //_bottomPlaceMenu(place: placeDetails);
+          },
+        ));
+      }
+      setState(() {
+        _fitMapToMarkers();
+      });
     }
-    setState(() {
-      _fitMapToMarkers();
-    });
   }
 
   @override
@@ -473,12 +384,12 @@ class _MapScreenState extends State<MapScreen> {
                   Icons.groups,
                   color: Theme.of(context).colorScheme.primary,
                 ),
-                onPressed: () async => {
+                onPressed: () => {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          MeetingScreen(place: _currentPlaceFull, contactsList: _contactsList),
+                          MeetingScreen(place: _currentPlaceFull),
                     ),
                   ),
                 },
@@ -554,7 +465,7 @@ class _MapScreenState extends State<MapScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      ContactsManagement(contactList: _contactsList, updateContactsList: _updateContactsList),
+                      const ContactsManagement(),
                 ),
               );
             },
