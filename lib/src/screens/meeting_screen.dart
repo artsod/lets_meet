@@ -7,9 +7,8 @@ import '../model/contact.dart';
 import '../model/group.dart';
 import '../model/meeting.dart';
 import '../model/place.dart';
+import '../model/enums.dart';
 import '../api/api_client.dart';
-
-enum ActionOnButton {New,Update,Cancel,End,Join,Decline,None}
 
 class MeetingScreen extends StatefulWidget {
   final NonCachableGooglePlace place;

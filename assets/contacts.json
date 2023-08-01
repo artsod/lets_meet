@@ -4,83 +4,103 @@
     "name": "John Doe",
     "email": "johndoe@gmail.com",
     "phoneNumber": "111111111",
-    "isRegisterd": true
+    "isRegistered": true,
+    "language": "English"
   },
   {
     "id": "2",
     "name": "Jessie James",
     "email": "jessiejame@gmail.com",
     "phoneNumber": "222222222",
-    "isRegisterd": false
+    "isRegistered": false,
+    "language": "Polish"
   },
   {
     "id": "3",
     "name": "Ronald McDonald",
     "email": "ronald@gmail.com",
     "phoneNumber": "333333333",
-    "isRegisterd": false
+    "isRegistered": false,
+    "language": "English"
   },
   {
     "id": "4",
     "name": "Amy Whinehouse",
     "email": "amyw@gmail.com",
     "phoneNumber": "444444444",
-    "isRegisterd": true
+    "isRegistered": true,
+    "language": "Polish"
   },
   {
     "id": "5",
     "name": "Sylvester Stalone",
     "email": "stalone@gmail.com",
     "phoneNumber": "555555555",
-    "isRegisterd": true
+    "isRegistered": true,
+    "language": "English"
   },
   {
     "id": "6",
     "name": "Toby Yayoby",
     "email": "ty@gmail.com",
     "phoneNumber": "666666666",
-    "isRegisterd": true
+    "isRegistered": true,
+    "language": "Polish"
   },
   {
     "id": "7",
     "name": "Eric Clapton",
     "email": "ericclapton@gmail.com",
     "phoneNumber": "777777777",
-    "isRegisterd": false
+    "isRegistered": false,
+    "language": "English"
   },
   {
     "id": "8",
     "name": "Mickey Mouse",
     "email": "mm@gmail.com",
     "phoneNumber": "88888888",
-    "isRegisterd": false
+    "isRegistered": false,
+    "language": "Polish"
   },
   {
     "id": "9",
     "name": "Bloodhound Gang",
     "email": "bgang@gmail.com",
     "phoneNumber": "999999999",
-    "isRegisterd": true
+    "isRegistered": true,
+    "language": "English"
   },
   {
     "id": "10",
     "name": "Tupac Shakur",
     "email": "2pac@gmail.com",
     "phoneNumber": "123456789",
-    "isRegisterd": false
+    "isRegistered": false,
+    "language": "Polish"
   },
   {
     "id": "11",
     "name": "Slim Shady",
     "email": "eminem@gmail.com",
     "phoneNumber": "987654321",
-    "isRegisterd": false
+    "isRegistered": false,
+    "language": "English"
   },
   {
     "id": "12",
     "name": "Polly Wanna Cracker",
     "email": "parrot@gmail.com",
     "phoneNumber": "123123123",
-    "isRegisterd": true
+    "isRegistered": true,
+    "language": "Polish"
+  },
+  {
+    "id": "606994342",
+    "name": "Marcin Maciejasz",
+    "email": "marcinmaciejasz@op.pl",
+    "phoneNumber": "606994342",
+    "isRegistered": true,
+    "language": "Polish"
   }
 ]

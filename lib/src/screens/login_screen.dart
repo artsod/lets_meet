@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import '../model/contact.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final Contact currentUser;
+  final Map<String,String> labels;
+
+  const LoginScreen({super.key, required this.currentUser, required this.labels});
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -12,7 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _verificationCodeController = TextEditingController();
 
-  String _selectedLanguage = 'English';
+  late String _selectedLanguage = widget.currentUser.language.name;
   bool _termsAccepted = false;
 
   void _verifyPhoneNumber(BuildContext context) {
@@ -90,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Login Page'),
+        title: Text(widget.labels['loginPageTitle']!),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -101,8 +105,8 @@ class _LoginScreenState extends State<LoginScreen> {
               TextFormField(
                 controller: _phoneNumberController,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number',
+                decoration: InputDecoration(
+                  labelText: widget.labels['phoneNumber'],
                 ),
                 validator: (String? value) {
                   if (value == null || value.isEmpty) {
@@ -114,8 +118,8 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 16.0),
               DropdownButtonFormField<String>(
                 value: _selectedLanguage,
-                decoration: const InputDecoration(
-                  labelText: 'Language',
+                decoration: InputDecoration(
+                  labelText: widget.labels['languageLabel'],
                 ),
                 items: <String>['English', 'Polish'].map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
@@ -146,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       });
                     },
                   ),
-                  const Text('I accept the terms and conditions'),
+                  Text(widget.labels['termsConditions']!),
                 ],
               ),
               const SizedBox(height: 16.0),
@@ -175,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     _showVerificationDialog(context);
                   }
                 },
-                child: const Text('Verify Phone Number'),
+                child: Text(widget.labels['verifyNumber']!),
               ),
             ],
           ),

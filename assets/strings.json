@@ -1,0 +1,20 @@
+[
+  {
+    "language": "English",
+    "loginPageTitle": "Login page",
+    "phoneNumber": "Phone number",
+    "languageLabel": "Language",
+    "termsConditions": "I accept the terms and conditions",
+    "verifyNumber": "Verify phone number",
+    "mainPageError": "There is something fishy going on... Please try again later and if the error persists, please let us know"
+  },
+  {
+    "language": "Polish",
+    "loginPageTitle": "Strona logowania",
+    "phoneNumber": "Numer telefonu",
+    "languageLabel": "Język",
+    "termsConditions": "Akceptuję regulamin i warunki korzystania",
+    "verifyNumber": "Weryfikuj numer telefonu",
+    "mainPageError": "Dzieje się coś podejrzanego... Proszę spróbować później i jeśli błąd będzie się utrzymywał, prosimy o kontakt"
+  }
+]

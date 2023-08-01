@@ -10,13 +10,18 @@ import 'dart:async';
 import '../api/api_client.dart';
 import '../model/place.dart';
 import '../model/meeting.dart';
+import '../model/enums.dart';
+import '../model/contact.dart';
 import '../widgets/favourites_list.dart';
 import '../widgets/search_map_box.dart';
 import '../widgets/bottom_place_menu.dart';
 import 'meeting_screen.dart';
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  final Contact currentUser;
+  final Map<String,String> labels;
+
+  const MapScreen({super.key, required this.currentUser, required this.labels});
 
   @override
   _MapScreenState createState() => _MapScreenState();
@@ -37,7 +42,7 @@ class _MapScreenState extends State<MapScreen> {
   bool _isMeetingInProgress = false; //Do ustawienia dynamicznie
   final Permission _permissionContacts = Permission.contacts;
   DateTime _currentBackPressTime = DateTime.now();
-
+  late Lang _lang;
 
   @override
   void initState() {
@@ -46,6 +51,8 @@ class _MapScreenState extends State<MapScreen> {
     _requestPermission();
     _initializePersonalData();
     _checkMeetingInProgress();
+    _lang = widget.currentUser.language;
+    print(_lang);
   }
 
   void _initializeCameraPosition() { //##zrobić żeby zaciągało się z lokalizacji albo żeby można było ustawić w ustawieniach
@@ -378,7 +385,7 @@ class _MapScreenState extends State<MapScreen> {
           padding: const EdgeInsets.only(left: 10, right: 5),
           child: Row(
             children: [
-              const Text('You\'re currently in the meeting', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+              Text(_lang == Lang.English ? 'You\'re currently in the meeting' : 'Jesteś obecnie na spotkaniu', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
               IconButton(
                 icon: Icon(
                   Icons.groups,

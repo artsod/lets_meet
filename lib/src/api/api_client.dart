@@ -18,12 +18,37 @@ class ApiClient {
 
   //General - log on, session, etc.
 
+  Future<Contact> getCurrentUser(String userID) async {
+//##Dodać czytanie numer telefonu - jak robimy, kiedy ktoś się chce zalogować z innego numer?
+    String contents = await rootBundle.loadString('assets/contacts.json');
+    final jsonData = json.decode(contents) as List<dynamic>;
+
+    final matchingContacts = jsonData.where((contact) => contact['id'] == userID).toList();
+
+    final Contact currentUser = Contact.fromJson(matchingContacts.first);
+
+    return currentUser;
+
+  }
+
+
   Future<bool> isLoggedIn() async {
     // Simulating a delay of 5 seconds
     await Future.delayed(const Duration(seconds: 3));
 
     // Return false to indicate that the user is not logged in
     return false;
+  }
+
+  Future<Map<String, String>> getStrings(String language) async {
+    String contents = await rootBundle.loadString('assets/strings.json');
+    final jsonData = json.decode(contents) as List<dynamic>;
+
+    var languageData = jsonData.where((data) => data['language'] == language).toList();
+    var mapOfStringLabels = Map<String, String>.from(languageData[0]);
+
+    return mapOfStringLabels;
+
   }
 
   void sendInvitation(String message, List<String> recipients) async {
@@ -148,7 +173,7 @@ class ApiClient {
     return placeTypes;
   }
 
-  //Users
+//Users
 
 //Future<void> inviteUser(String groupId, String email) async {
 //  final response = await http.post(Uri.parse('$baseUrl/groups/$groupId/invite'),

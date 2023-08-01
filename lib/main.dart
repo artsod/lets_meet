@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'src/model/contact.dart';
 import 'src/screens/map_screen.dart';
 import 'src/screens/login_screen.dart';
 import 'src/api/api_client.dart';
@@ -6,11 +7,22 @@ import 'src/api/api_client.dart';
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
-  final  apiClient = ApiClient();
+  final apiClient = ApiClient();
   final Color mainColor = Colors.orange.shade700;
   final Color secondaryColor = Colors.orange.shade100;
+  late final Contact currentUser;
+  late final Map<String,String> labels;
 
-  MyApp({super.key});
+  MyApp({super.key}) {
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    //##Zrobić dynamicznie
+    currentUser = await apiClient.getCurrentUser('606994342');
+    labels = await apiClient.getStrings(currentUser.language.name);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,28 +68,28 @@ class MyApp extends StatelessWidget {
       ),
       home: FutureBuilder(
         future: apiClient.isLoggedIn(),
-        builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+        builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const LoadingScreen();
           } else if (snapshot.hasData) {
             final bool? isLoggedIn = snapshot.data;
             if (isLoggedIn != null && isLoggedIn) {
-              return const MapScreen();
+              return MapScreen(currentUser: currentUser, labels: labels);
             } else {
-              return const LoginScreen();
+              return LoginScreen(currentUser: currentUser, labels: labels);
             }
           } else {
-            return const Scaffold(
+            return Scaffold(
               body: Center(
-                child: Text('There is something fishy going on... Please try again later and if the error persists, please let us know'),
+                child: Text(labels['mainPageError']!),
               ),
             );
           }
         },
       ),
       routes: {
-        '/login': (context) => const LoginScreen(),
-        '/map': (context) => const MapScreen(),
+        '/login': (context) => LoginScreen(currentUser: currentUser, labels: labels),
+        '/map': (context) => MapScreen(currentUser: currentUser, labels: labels),
       },
     );
   }
