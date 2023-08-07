@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
     WidgetsFlutterBinding.ensureInitialized();
     //##Zrobić dynamicznie
     currentUser = await apiClient.getCurrentUser('606994342');
-    labels = await apiClient.getStrings(currentUser.language.name);
+    labels = await apiClient.getLabels(currentUser.language.name);
   }
 
   @override

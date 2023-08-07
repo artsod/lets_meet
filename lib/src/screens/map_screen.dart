@@ -36,7 +36,7 @@ class _MapScreenState extends State<MapScreen> {
   late CachableGooglePlace _currentPlace;
   late NonCachableGooglePlace _currentPlaceFull;
   List<CachableGooglePlace> _favouritePlacesList = [];
-  String _selectedPlaceType = 'Any';
+  late String _selectedPlaceType = widget.labels['any']!;
   String _enteredKeyword = '';
   late CameraPosition _currentCameraPosition;
   bool _isMeetingInProgress = false; //Do ustawienia dynamicznie
@@ -81,7 +81,7 @@ class _MapScreenState extends State<MapScreen> {
     if (now.difference(_currentBackPressTime) > const Duration(seconds: 2)) {
       _currentBackPressTime = now;
       Fluttertoast.showToast(
-          msg: 'Press back again to exit app',
+          msg: widget.labels['exitMessage']!,
           toastLength: Toast.LENGTH_LONG,
           backgroundColor: Colors.white,
           textColor: Theme.of(context).colorScheme.primary,
@@ -152,7 +152,7 @@ class _MapScreenState extends State<MapScreen> {
     PlacesSearchResponse response = await _places.searchNearbyWithRadius(
       Location(lat: _currentCameraPosition.target.latitude, lng: _currentCameraPosition.target.longitude),
       radius.toInt(),
-      type: type=='Any' ? 'point_of_interest' : type,
+      type: type==widget.labels['any'] ? 'point_of_interest' : type,
       keyword: keyword,
     );
     if (response.status == 'OK') {
@@ -186,7 +186,7 @@ class _MapScreenState extends State<MapScreen> {
       });
     } else if (response.status =='ZERO_RESULTS') {
       Fluttertoast.showToast(
-          msg: 'No places has been found',
+          msg: widget.labels['noPlacesFound']!,
           toastLength: Toast.LENGTH_SHORT,
           backgroundColor: Colors.white,
           textColor: Theme.of(context).colorScheme.primary,
@@ -264,7 +264,8 @@ class _MapScreenState extends State<MapScreen> {
         return BottomPlaceMenu(
             places: _places,
             place: place,
-            searchResult: searchResult
+            searchResult: searchResult,
+            labels: widget.labels
         );
       },
     );
@@ -299,7 +300,7 @@ class _MapScreenState extends State<MapScreen> {
 
     if (listOfCurrentMeetings.isEmpty) {
       Fluttertoast.showToast(
-          msg: 'There are no current meetings',
+          msg: widget.labels['noCurrentMeetings']!,
           toastLength: Toast.LENGTH_SHORT,
           backgroundColor: Colors.white,
           textColor: Theme.of(context).colorScheme.primary,
@@ -385,7 +386,7 @@ class _MapScreenState extends State<MapScreen> {
           padding: const EdgeInsets.only(left: 10, right: 5),
           child: Row(
             children: [
-              Text(_lang == Lang.English ? 'You\'re currently in the meeting' : 'Jesteś obecnie na spotkaniu', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+              Text(widget.labels['youreInMeeting']!, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
               IconButton(
                 icon: Icon(
                   Icons.groups,
@@ -396,7 +397,7 @@ class _MapScreenState extends State<MapScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          MeetingScreen(place: _currentPlaceFull),
+                          MeetingScreen(place: _currentPlaceFull, labels: widget.labels),
                     ),
                   ),
                 },
@@ -430,25 +431,25 @@ class _MapScreenState extends State<MapScreen> {
                 onPressed: () {
                   _showFavouritePlaces(context);
                 },
-                child: const Text('Your favourite places', style: TextStyle(fontSize: 10), textAlign: TextAlign.center)
+                child: Text(widget.labels['yourFavouritePlaces']!, style: const TextStyle(fontSize: 10), textAlign: TextAlign.center)
             ),
             ElevatedButton(
                 onPressed: () {
                   _showCurrentMeetings();
                 },
-                child: const Text('Find current meetings', style: TextStyle(fontSize: 10), textAlign: TextAlign.center)
+                child: Text(widget.labels['findCurrentMeetings']!, style: const TextStyle(fontSize: 10), textAlign: TextAlign.center)
             ),
             ElevatedButton(
               onPressed: () {
                 _searchPlaces(type: 'point_of_interest', keyword: 'Plac zabaw'); //##This should be taken from the current user
               },
-              child: const Text('Search here for: \n Plac zabaw', style: TextStyle(fontSize: 10), textAlign: TextAlign.center), //##$_favouritePlaceType This should be taken from current user
+              child: Text('${widget.labels['searchHereFor']} \n Plac zabaw', style: const TextStyle(fontSize: 10), textAlign: TextAlign.center), //##$_favouritePlaceType This should be taken from current user
             ),
             ElevatedButton(
                 onPressed: () {
                   _searchOnTheMap(context);
                 },
-                child: const Text('Search on the map', style: TextStyle(fontSize: 10), textAlign: TextAlign.center)
+                child: Text(widget.labels['searchMap']!, style: const TextStyle(fontSize: 10), textAlign: TextAlign.center)
             ),
           ],
         ),
@@ -463,34 +464,34 @@ class _MapScreenState extends State<MapScreen> {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.primary,
             ),
-            child: const Text("Hi Marcin"),
+            child: Text('${widget.labels['hi']} Marcin') //##Imię dynamicznie,
           ),
           ListTile(
-            title: const Text("Contacts and groups"),
+            title: Text(widget.labels['contactsGroups']!),
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      const ContactsManagement(),
+                      ContactsManagement(labels: widget.labels),
                 ),
               );
             },
           ),
           ListTile(
-            title: const Text("My meetings"),
+            title: Text(widget.labels['myMeetings']!),
             onTap: () {
 
             },
           ),
           ListTile(
-            title: const Text("Settings"),
+            title: Text(widget.labels['settings']!),
             onTap: () {
 
             },
           ),
           ListTile(
-            title: const Text("Log out"),
+            title: Text(widget.labels['logOut']!),
             onTap: () {
 
             },

@@ -7,8 +7,9 @@ class BottomPlaceMenu extends StatefulWidget {
   final GoogleMapsPlaces places;
   final CachableGooglePlace place;
   final PlacesSearchResult? searchResult;
+  final Map<String,String> labels;
 
-  BottomPlaceMenu({super.key, required this.places, required this.place, this.searchResult});
+  BottomPlaceMenu({super.key, required this.places, required this.place, required this.labels, this.searchResult});
 
   @override
   _BottomPlaceMenuState createState() => _BottomPlaceMenuState();
@@ -66,7 +67,7 @@ class _BottomPlaceMenuState extends State<BottomPlaceMenu> {
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          MeetingScreen(place: _currentPlaceFull),
+                          MeetingScreen(place: _currentPlaceFull, labels: widget.labels),
                     ),
                   );
                 },

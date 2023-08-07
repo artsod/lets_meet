@@ -13,10 +13,12 @@ import '../api/api_client.dart';
 class MeetingScreen extends StatefulWidget {
   final NonCachableGooglePlace place;
   final Meeting? meeting;
+  final Map<String,String> labels;
 
   const MeetingScreen({
     super.key,
     required this.place,
+    required this.labels,
     this.meeting
   });
 
@@ -168,7 +170,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
     List<Contact>? selectedContacts = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddContactsListScreen(contactsList: _contactsList, contactsToExclude: _participantsContacts),
+        builder: (context) => AddContactsListScreen(contactsList: _contactsList, contactsToExclude: _participantsContacts, labels: widget.labels),
       ),
     );
 
@@ -185,7 +187,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
     List<Group>? selectedGroups = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddGroupsListScreen(groupsList: _groupsList, groupsToExclude: _participantsGroups),
+        builder: (context) => AddGroupsListScreen(groupsList: _groupsList, groupsToExclude: _participantsGroups, labels: widget.labels),
       ),
     );
 

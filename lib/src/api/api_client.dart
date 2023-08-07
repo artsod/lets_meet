@@ -40,8 +40,8 @@ class ApiClient {
     return false;
   }
 
-  Future<Map<String, String>> getStrings(String language) async {
-    String contents = await rootBundle.loadString('assets/strings.json');
+  Future<Map<String, String>> getLabels(String language) async {
+    String contents = await rootBundle.loadString('assets/langLabels.json');
     final jsonData = json.decode(contents) as List<dynamic>;
 
     var languageData = jsonData.where((data) => data['language'] == language).toList();
@@ -70,6 +70,7 @@ class ApiClient {
         'email': 'marcinmaciejasz@op.pl',
         'phoneNumber': csContact.phones![0].value,
         'isRegistered': true,
+        'language': 'English'
       });
     }).toList();
     result[0].isRegistered = false;
