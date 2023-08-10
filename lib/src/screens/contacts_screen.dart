@@ -4,10 +4,8 @@ import '../model/contact.dart';
 import '../model/group.dart';
 
 class ContactsManagement extends StatefulWidget {
-  final List<Contact> contactList;
-  final Function(List<Contact>) updateContactsList;
 
-  const ContactsManagement({super.key, required this.contactList, required this.updateContactsList});
+  const ContactsManagement({super.key});
 
   @override
   _ContactsManagementState createState() => _ContactsManagementState();
@@ -15,9 +13,7 @@ class ContactsManagement extends StatefulWidget {
 
 class _ContactsManagementState extends State<ContactsManagement> {
   bool _showContacts = true;
-
   List<Contact> _contactsList = [];
-  late Function(List<Contact>) _updateContactsList;
   final ApiClient _apiClient = ApiClient();
   List<Group> _groupsList = [];
 
@@ -29,9 +25,8 @@ class _ContactsManagementState extends State<ContactsManagement> {
   }
 
   Future<void> initializeContacts() async {
-    _contactsList = widget.contactList;
-    _updateContactsList = widget.updateContactsList;
-
+    //##dorobić kółeczko z czekaniem na wczytanie kontaktów
+    _contactsList = await _apiClient.getContactsLocal();
     setState(() {
 
     });
@@ -39,8 +34,11 @@ class _ContactsManagementState extends State<ContactsManagement> {
 
   Future<void> initializeGroups() async {
     _groupsList = await _apiClient.getGroups();
-    setState(() {
+  }
 
+  void renameGroup(List<Group> updatedList) {
+    setState(() {
+      _groupsList = updatedList;
     });
   }
 
@@ -440,13 +438,6 @@ class _ContactsManagementState extends State<ContactsManagement> {
       ],
     );
   }
-
-  //method for renaming group - passed as callback to other widgets
-  void renameGroup(List<Group> updatedList) {
-    setState(() {
-      _groupsList = updatedList;
-    });
-  }
 }
 
 class GroupContactsScreen extends StatefulWidget {
@@ -481,6 +472,23 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
     setState(() {
 
     });
+  }
+
+  void _navigateToAddContacts(List<Contact> contactsInGroup) async {
+    List<Contact>? selectedContacts = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddContactsListScreen(contactsList: _contactsList, contactsToExclude: contactsInGroup),
+      ),
+    );
+
+    if (selectedContacts != null && selectedContacts.isNotEmpty) {
+      //##Tutaj wstawić logikę dodawania kontaktu do grupy w back-endzie
+      _apiClient.addContactToGroup();
+      setState(() {
+        _groupContactsList.addAll(selectedContacts);
+      });
+    }
   }
 
   @override
@@ -586,23 +594,6 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
       ),
     );
   }
-
-  void _navigateToAddContacts(List<Contact> contactsInGroup) async {
-    List<Contact>? selectedContacts = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddContactsListScreen(contactsList: _contactsList, contactsToExclude: contactsInGroup),
-      ),
-    );
-
-    if (selectedContacts != null && selectedContacts.isNotEmpty) {
-      //##Tutaj wstawić logikę dodawania kontaktu do grupy w back-endzie
-      _apiClient.addContactToGroup();
-      setState(() {
-        _groupContactsList.addAll(selectedContacts);
-      });
-    }
-  }
 }
 
 class AddContactsListScreen extends StatefulWidget {
@@ -618,6 +609,7 @@ class _AddContactsListScreenState extends State<AddContactsListScreen> {
   List<Contact> _addableContactsList = [];
   List<Contact> _nonAddableContactsList = [];
   final ApiClient _apiClient = ApiClient();
+  final List<Contact> _selectedContacts = [];
 
   @override
   void initState() {
@@ -636,8 +628,6 @@ class _AddContactsListScreenState extends State<AddContactsListScreen> {
 
     });
   }
-
-  final List<Contact> _selectedContacts = [];
 
   @override
   Widget build(BuildContext context) {
@@ -790,6 +780,7 @@ class AddGroupsListScreen extends StatefulWidget {
 
 class _AddGroupsListScreenState extends State<AddGroupsListScreen> {
   List<Group> _addableGroupsList = [];
+  final List<Group> _selectedGroups = [];
 
   @override
   void initState() {
@@ -804,8 +795,6 @@ class _AddGroupsListScreenState extends State<AddGroupsListScreen> {
 
     });
   }
-
-  final List<Group> _selectedGroups = [];
 
   @override
   Widget build(BuildContext context) {

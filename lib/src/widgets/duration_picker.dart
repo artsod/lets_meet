@@ -85,6 +85,7 @@ class _DurationPickerState extends State<DurationPicker> {
       }
       widget.onTap(_newDuration);
     });
+    print(_newDuration.toString());
   }
 
   @override
