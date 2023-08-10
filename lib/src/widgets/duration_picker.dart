@@ -16,7 +16,6 @@ class _DurationPickerState extends State<DurationPicker> {
   late Duration _newDuration = widget.initialDuration;
   int _selectedHours = 0;
   int _selectedMinutes = 0;
-  final Color _color=Colors.orange.shade700;
 
   Future<TimeOfDay?> showDurationPicker(BuildContext context) async {
     return showDialog<TimeOfDay>(
@@ -33,7 +32,7 @@ class _DurationPickerState extends State<DurationPicker> {
                       value: _selectedHours,
                       minValue: 0,
                       maxValue: 24,
-                      selectedTextStyle: TextStyle(color: _color, fontSize: 30),
+                      selectedTextStyle: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 30),
                       itemWidth: 50,
                       onChanged: (value) {
                         setState(() => _selectedHours = value);
@@ -47,7 +46,7 @@ class _DurationPickerState extends State<DurationPicker> {
                       minValue: 0,
                       maxValue: 60,
                       step: 5,
-                      selectedTextStyle: TextStyle(color: _color, fontSize: 30),
+                      selectedTextStyle: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 30),
                       itemWidth: 50,
                       onChanged: (value) {
                         setState(() => _selectedMinutes = value);
@@ -61,9 +60,6 @@ class _DurationPickerState extends State<DurationPicker> {
           ),
           actions: [
             ElevatedButton(
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(_color),
-              ),
               onPressed: () {
                 Navigator.of(context).pop(TimeOfDay(
                   hour: _selectedHours,
@@ -73,9 +69,6 @@ class _DurationPickerState extends State<DurationPicker> {
               child: const Text('OK'),
             ),
             ElevatedButton(
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(_color),
-              ),
               onPressed: () {
                 Navigator.of(context).pop();
               },
