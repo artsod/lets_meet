@@ -6,7 +6,7 @@ import 'src/api/api_client.dart';
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
-  final AuthService authService = AuthService();
+  final  apiClient = ApiClient();
   final Color mainColor = Colors.orange.shade700;
   final Color secondaryColor = Colors.orange.shade100;
 
@@ -55,7 +55,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: FutureBuilder(
-        future: authService.isLoggedIn(),
+        future: apiClient.isLoggedIn(),
         builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const LoadingScreen();

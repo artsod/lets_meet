@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../model/contact.dart';
-import 'package:lets_meet/src/api/api_groups.dart';
+import '../model/group.dart';
 
 
 class AttendeesList extends StatefulWidget {

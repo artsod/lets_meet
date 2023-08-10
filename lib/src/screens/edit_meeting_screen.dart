@@ -8,7 +8,7 @@ class EditMeeting extends StatefulWidget {
   final bool meetingStarted;
   final String headerText;
 
-  const EditMeeting(this.place,this.meetingStarted, this.headerText);
+  const EditMeeting(this.place,this.meetingStarted, this.headerText, {super.key});
 
   @override
   _EditMeetingState createState() => _EditMeetingState(place, meetingStarted, headerText);
@@ -61,7 +61,7 @@ class _EditMeetingState extends State<EditMeeting> {
     );
 
     Widget startTimeSection = Container(
-      padding: EdgeInsets.symmetric(vertical: 0),
+      padding: const EdgeInsets.symmetric(vertical: 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -89,7 +89,7 @@ class _EditMeetingState extends State<EditMeeting> {
     );
 
     Widget durationSection = Container(
-      padding: EdgeInsets.symmetric(vertical: 0),
+      padding: const EdgeInsets.symmetric(vertical: 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -113,7 +113,7 @@ class _EditMeetingState extends State<EditMeeting> {
     );
 
     Widget endTimeSection = Container(
-      padding: EdgeInsets.symmetric(vertical: 0),
+      padding: const EdgeInsets.symmetric(vertical: 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -137,7 +137,7 @@ class _EditMeetingState extends State<EditMeeting> {
     );
 
     Widget contactsSection = Container(
-      padding: EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child:Column(
         children: [
           Row(
