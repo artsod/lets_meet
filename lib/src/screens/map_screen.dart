@@ -3,13 +3,14 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:lets_meet/src/model/contact.dart';
-import 'package:lets_meet/src/screens/edit_meeting_screen.dart';
 import 'package:lets_meet/src/screens/contacts_screen.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as mt;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:async';
 import '../api/api_client.dart';
-import 'organize_meeting_screen.dart';
+import '../model/place.dart';
+import 'meeting_screen.dart';
 
 void main() {
   //debugPaintSizeEnabled = true;
@@ -26,17 +27,18 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
+
+  DateTime _currentBackPressTime = DateTime.now();
   late PlacesDetailsResponse staticPlace; //##To jest tylko na potrzeby statycznego przypisania miejsca. Jak zrobimy właściwe wywołanie spoktania w toku, można to usunąć
   late GoogleMapController mapController;
-  final sqrt2 = 1.4142135623730951;
   final _places = GoogleMapsPlaces(apiKey: 'AIzaSyDWBhV1GqMnWxUjMDHiGHLNqvuthU8nUcE');
   final Set<Marker> _markers = {};
   final bool _isMeetingInProgress = true; //Do ustawienia dynamicznie
   final String _favouritePlaceType = 'Plac zabaw'; //Do ustawienia dynamicznie w opcjach konta
-  List<List<dynamic>> favouritePlacesList = [];
+  List<CachableGooglePlace> favouritePlacesList = [];
   String selectedPlaceType = 'Any';
   String enteredKeyword = '';
-  CameraPosition _currentCameraPosition = const CameraPosition(
+  CameraPosition _currentCameraPosition = const CameraPosition( //##do wzięcia z lokalizacji, jeśli użytkownik wyrazi zgodę
     target: LatLng(51.1, 17.0333),
     zoom: 12,
   );
@@ -44,6 +46,9 @@ class _MapScreenState extends State<MapScreen> {
   final Permission _permission = Permission.contacts;
   final ApiClient _apiClient = ApiClient();
   List<Contact> _contactsList = [];
+  late CachableGooglePlace _currentPlace;
+  late NonCachableGooglePlace _currentPlaceFull;
+  late PlaceDetails _currentPlaceDetails;
 
   @override
   void initState() {
@@ -85,28 +90,28 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _getPOI(PointOfInterest poi) async {
-    PlacesDetailsResponse response = await _places.getDetailsByPlaceId(poi.placeId);
-    late PlaceDetails poiDetails = response.result;
-    late Marker marker = Marker(
-      markerId: MarkerId(poi.placeId),
-      position: poi.position,
+    _currentPlace = CachableGooglePlace(
+        googlePlaceID: poi.placeId,
+        googlePlaceLatLng: poi.position,
+        ownName: poi.name.replaceAll('\n', ''),
+        ownIconUrl: 'assets/defaultPlaceIcon.png'
+    );
+    Marker marker = Marker(
+      markerId: MarkerId(_currentPlace.googlePlaceID),
+      position: _currentPlace.googlePlaceLatLng,
       infoWindow: InfoWindow(
-        title: poi.name,
-        snippet: poiDetails.vicinity,
+        title: _currentPlace.ownName,
       ),
     );
 
     setState(() {
       _markers.clear();
       _markers.add(marker);
-      _modalOrganizeMeeting(poiDetails);
+      _modalOrganizeMeeting(place: _currentPlace);
     });
   }
 
-  Future<void> _getPlaces(String type, String keyword) async {
-
-    late PlacesDetailsResponse placeDetailsResponse;
-    late PlaceDetails placeDetails;
+  Future<void> _searchPlaces(String type, String keyword) async {
 
     // Get the current visible region of the map
     final LatLngBounds visibleRegion = await mapController.getVisibleRegion();
@@ -138,9 +143,13 @@ class _MapScreenState extends State<MapScreen> {
               ),
 
               onTap: () async {
-                placeDetailsResponse = await _places.getDetailsByPlaceId(result.placeId);
-                placeDetails = placeDetailsResponse.result;
-                _modalOrganizeMeeting(placeDetails);
+                _currentPlace = CachableGooglePlace(
+                    googlePlaceID: result.placeId,
+                    googlePlaceLatLng: LatLng(result.geometry!.location.lat,result.geometry!.location.lng),
+                    ownName: result.name,
+                    ownIconUrl: 'assets/defaultPlaceIcon.png'
+                );
+                _modalOrganizeMeeting(place: _currentPlace, searchResults: result);
               },
             ));
           }
@@ -169,20 +178,19 @@ class _MapScreenState extends State<MapScreen> {
               itemBuilder: (BuildContext context, int index) {
                 return GestureDetector(
                   onTap: () {
-                    _onMapTapped(LatLng(favouritePlacesList[index][1],favouritePlacesList[index][2]),17);
+                    _onMapTapped(favouritePlacesList[index].googlePlaceLatLng,17);
 
                     setState(() {
                       _markers.clear();
                       _markers.add(Marker(
-                        markerId: MarkerId(favouritePlacesList[index][0]),
-                        position: LatLng(favouritePlacesList[index][1],favouritePlacesList[index][2]),
+                        markerId: MarkerId(favouritePlacesList[index].googlePlaceID),
+                        position: favouritePlacesList[index].googlePlaceLatLng,
                         infoWindow: InfoWindow(
-                          title: favouritePlacesList[index][3],
-                          snippet: favouritePlacesList[index][4],
+                          title: favouritePlacesList[index].ownName,
                         ),
 
                         onTap: () async {
-                          _modalOrganizeMeeting((await _places.getDetailsByPlaceId(favouritePlacesList[index][0])).result);
+                          _modalOrganizeMeeting(place: favouritePlacesList[index]);
                         },
                       ));
                       Navigator.pop(context);
@@ -194,20 +202,17 @@ class _MapScreenState extends State<MapScreen> {
                         child:
                         ListTile(
                           leading: CircleAvatar(
-                            backgroundImage: NetworkImage(favouritePlacesList[index][5]),
+                            backgroundImage: AssetImage(favouritePlacesList[index].ownIconUrl),
                           ),
-                          title: Text(favouritePlacesList[index][3]),
-                          subtitle: Text(favouritePlacesList[index][4] ?? ''),
+                          title: Text(favouritePlacesList[index].ownName),
                         ),
                       ),
                       ElevatedButton(
                           style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(Colors.grey)),
                           onPressed: () {
                             setState(() {
-                              removeFromFavourites(favouritePlacesList[index][0]);
+                              removeFromFavourites(favouritePlacesList[index].googlePlaceID);
                               _markers.clear();
-                              Navigator.pop(context);
-                              _showFavouritePlaces(context);
                             });
                           },
                           child: const Text('Remove',
@@ -245,13 +250,20 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void removeFromFavourites(String placeID) {
-    favouritePlacesList.removeWhere((row) => row[0] == placeID);
-    _apiClient.removeFromFavourites(favouritePlacesList);
+    //##Tutaj powinna być logika usuwania miejsca z ulubionych w back-nedzie
+    //_apiClient.removeFromFavourites();
+    favouritePlacesList.removeWhere((row) => row.googlePlaceID == placeID);
   }
 
-  void addToFavourites (String placeID, double? lat, double? lng, String title, String? vicinity, String? icon) async {
-    favouritePlacesList.add([placeID,lat,lng,title,vicinity,icon]);
-    _apiClient.addToFavourites(favouritePlacesList);
+  void addToFavourites (CachableGooglePlace place) async {
+    //##Tutaj powinna być logika dodawania miejsca do ulubionych w back-nedzie
+    //_apiClient.addToFavourites();
+    favouritePlacesList.add(CachableGooglePlace(
+        googlePlaceID: place.googlePlaceID,
+        googlePlaceLatLng: place.googlePlaceLatLng,
+        ownName: place.ownName,
+        ownIconUrl: 'assets/defaultPlaceIcon.png')
+    );
   }
 
   void _searchOnTheMap (BuildContext context) async {
@@ -356,7 +368,7 @@ class _MapScreenState extends State<MapScreen> {
                     child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          _getPlaces(selectedPlaceType, enteredKeyword);
+                          _searchPlaces(selectedPlaceType, enteredKeyword);
                         },
                         child: const Text('Search for places',
                             style: TextStyle(fontSize: 10))
@@ -383,7 +395,20 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  void _modalOrganizeMeeting (PlaceDetails details) {
+  Future<void> buildFullCurrentPlace(CachableGooglePlace place) async {
+    _currentPlaceDetails = (await _places.getDetailsByPlaceId(place.googlePlaceID, fields: ['place_id','name','vicinity','photos','formatted_address'])).result;
+
+    _currentPlaceFull = NonCachableGooglePlace(
+        googlePlaceID: place.googlePlaceID,
+        googlePlaceLatLng: place.googlePlaceLatLng,
+        address: _currentPlaceDetails.formattedAddress ?? '',
+        googleName: place.ownName,
+        placePhotoReference: _currentPlaceDetails.photos.isNotEmpty ? _currentPlaceDetails.photos[0].photoReference : '',
+        vicinity: _currentPlaceDetails.vicinity ?? ''
+    );
+  }
+
+  void _modalOrganizeMeeting ({required CachableGooglePlace place, PlacesSearchResult? searchResults}) {
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
@@ -392,10 +417,9 @@ class _MapScreenState extends State<MapScreen> {
           children: <Widget>[
             ListTile(
               leading: CircleAvatar(
-                backgroundImage: NetworkImage(details.icon!),
+                backgroundImage: AssetImage(place.ownIconUrl),
               ),
-              title: Text(details.name),
-              subtitle: Text(details.vicinity ?? ''),
+              title: Text(place.ownName),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -403,15 +427,26 @@ class _MapScreenState extends State<MapScreen> {
                 const SizedBox(width: 20),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () async =>
-                    {
+                    onPressed: () async {
+                      if (searchResults == null) {
+                        await buildFullCurrentPlace(place);
+                      } else {
+                        _currentPlaceFull = NonCachableGooglePlace(
+                            googlePlaceID: place.googlePlaceID,
+                            googlePlaceLatLng: place.googlePlaceLatLng,
+                            address: searchResults.formattedAddress ?? '',
+                            googleName: place.ownName,
+                            placePhotoReference: searchResults.photos.isNotEmpty ? searchResults.photos[0].photoReference : '',
+                            vicinity: searchResults.vicinity ?? ''
+                        );
+                      }
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              OrganizeMeeting(place: details, contactsList: _contactsList),
+                              MeetingScreen(place: _currentPlaceFull, contactsList: _contactsList),
                         ),
-                      ),
+                      );
                     },
                     child: const Text('Let\'s meet here', style: TextStyle(fontSize: 10)),
                   ),
@@ -421,7 +456,7 @@ class _MapScreenState extends State<MapScreen> {
                   child:
                   ElevatedButton(
                       onPressed: () async {
-                        addToFavourites(details.placeId, details.geometry?.location.lat, details.geometry?.location.lng, details.name, details.vicinity, details.icon);
+                        addToFavourites(place);
                       },
                       child: const Text(
                           'Add to favourites', style: TextStyle(fontSize: 10))
@@ -491,8 +526,7 @@ class _MapScreenState extends State<MapScreen> {
         ),
 
         onTap: () async {
-          PlaceDetails placeDetails = (await _places.getDetailsByPlaceId(placeID)).result;
-          _modalOrganizeMeeting(placeDetails);
+          //_modalOrganizeMeeting(placeDetails);
         },
       ));
     }
@@ -522,161 +556,180 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
+  Future<bool> onWillPop() {
+    DateTime now = DateTime.now();
+    if (now.difference(_currentBackPressTime) > const Duration(seconds: 2)) {
+      _currentBackPressTime = now;
+      Fluttertoast.showToast(
+        msg: 'Press back again to exit app',
+        toastLength: Toast.LENGTH_LONG,
+        backgroundColor: Colors.white,
+        textColor: Theme.of(context).colorScheme.primary,
+        fontSize: 20,
+        gravity: ToastGravity.BOTTOM
+      );
+      return Future.value(false);
+    }
+    Fluttertoast.cancel();
+    return Future.value(true);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: Theme.of(context),
-      home: Scaffold(
-        body: Stack(
-            children: <Widget>[
-              GoogleMap(
-                onMapCreated: _onMapCreated,
-                markers: _markers,
-                onCameraMove: (CameraPosition position) {
-                  _currentCameraPosition = position;
-                },
-                onCameraIdle: () {},
-                onTap: _onMapTapped,
-                onPoiTap: (PointOfInterest poi) {
-                  setState(() {
-                    _onMapTapped(poi.position);
-                    _getPOI(poi);
-                  });
-                },
-                zoomControlsEnabled: false,
-                initialCameraPosition: CameraPosition(
-                  target: _currentCameraPosition.target,
-                  zoom: 11.0,
+      home: WillPopScope (
+        onWillPop: onWillPop,
+        child: Scaffold(
+          body: Stack(
+              children: <Widget>[
+                GoogleMap(
+                  onMapCreated: _onMapCreated,
+                  markers: _markers,
+                  onCameraMove: (CameraPosition position) {
+                    _currentCameraPosition = position;
+                  },
+                  onCameraIdle: () {},
+                  onTap: _onMapTapped,
+                  onPoiTap: (PointOfInterest poi) {
+                    setState(() {
+                      _onMapTapped(poi.position);
+                      _getPOI(poi);
+                    });
+                  },
+                  zoomControlsEnabled: false,
+                  initialCameraPosition: CameraPosition(
+                    target: _currentCameraPosition.target,
+                    zoom: 11.0,
+                  ),
                 ),
-              ),
-              //Hamburger menu
-              Builder(
-                builder: (BuildContext context) {
-                  return Positioned(
-                    top:50,
-                    left:20,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.menu,
-                          color: Colors.white,
+                //Hamburger menu
+                Builder(
+                  builder: (BuildContext context) {
+                    return Positioned(
+                      top:50,
+                      left:20,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          shape: BoxShape.circle,
                         ),
-                        onPressed: () {Scaffold.of(context).openDrawer(); },
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.menu,
+                            color: Colors.white,
+                          ),
+                          onPressed: () {Scaffold.of(context).openDrawer(); },
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
-              //Bottom menu
-              Builder(
-                builder: (BuildContext context) {
-                  return Positioned(
-                    left:30,
-                    right:30,
-                    bottom: 20,
-                    height: 100,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.secondary,
-                        shape: BoxShape.rectangle,
-                        borderRadius: BorderRadius.circular(20.0),
-                      ),
-                      child: GridView.count(
-                        primary: false,
-                        padding: const EdgeInsets.all(10),
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                        crossAxisCount: 2,
-                        childAspectRatio: 4.7,
-                        children: [
-                          ElevatedButton(
-                              onPressed: () {
-                                _getPlaces('point_of_interest',_favouritePlaceType);
-                              },
-                              child: Text('Search here for: $_favouritePlaceType', style: const TextStyle(fontSize: 10))
-                          ),
-                          ElevatedButton(
-                              onPressed: () {
-                                _showFavouritePlaces(context);
-                              },
-                              child: const Text('Your favourite places', style: TextStyle(fontSize: 10))
-                          ),
-                          ElevatedButton(
-                              onPressed: () {
-                                showCurrentMeetings();
-                              },
-                              child: const Text('Find current meetings', style: TextStyle(fontSize: 10))
-                          ),
-                          ElevatedButton(
-                              onPressed: () {
-                                _searchOnTheMap(context);
-                              },
-                              child: const Text('Search on the map', style: TextStyle(fontSize: 10))
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-              //Meeting in progress widget
-              Builder(
-                builder: (BuildContext context) {
-                  return Visibility(
-                    visible: _isMeetingInProgress,
-                    child: Positioned(
-                      bottom: 130,
-                      right:35,
+                    );
+                  },
+                ),
+                //Bottom menu
+                Builder(
+                  builder: (BuildContext context) {
+                    return Positioned(
+                      left:30,
+                      right:30,
+                      bottom: 20,
+                      height: 100,
                       child: Container(
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.secondary,
                           shape: BoxShape.rectangle,
                           borderRadius: BorderRadius.circular(20.0),
                         ),
-                        padding: const EdgeInsets.all(5),
-                        child: Row(
+                        child: GridView.count(
+                          primary: false,
+                          padding: const EdgeInsets.all(10),
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          crossAxisCount: 2,
+                          childAspectRatio: 4.7,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(5),
-                              child: const Text('You\'re currently in the meeting', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.primary,
-                                shape: BoxShape.circle,
-                              ),
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.access_time_filled,
-                                  color: Colors.white,
-                                ),
-                                onPressed: () async => {
-                                  staticPlace=await _places.getDetailsByPlaceId('ChIJ-eVnDB7oD0cRTobTaBciLuo'), //Do usunięcia po wlaściwej implementacji tego wywołania ze spotkaniem w toku
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          EditMeeting(staticPlace.result,true,'You\'re currently in the meeting'),
-                                    ),
-                                  ),
+
+                            ElevatedButton(
+                                onPressed: () {
+                                  _showFavouritePlaces(context);
                                 },
-                              ),
+                                child: const Text('Your favourite places', style: TextStyle(fontSize: 10))
+                            ),
+                            ElevatedButton(
+                                onPressed: () {
+                                  showCurrentMeetings();
+                                },
+                                child: const Text('Find current meetings', style: TextStyle(fontSize: 10))
+                            ),
+                            ElevatedButton(
+                                onPressed: () {
+                                  _searchPlaces('point_of_interest',_favouritePlaceType);
+                                },
+                                child: Text('Search here for: $_favouritePlaceType', style: const TextStyle(fontSize: 10))
+                            ),
+                            ElevatedButton(
+                                onPressed: () {
+                                  _searchOnTheMap(context);
+                                },
+                                child: const Text('Search on the map', style: TextStyle(fontSize: 10))
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  );
-                },
-              ),
-            ]
-        ),
-        drawer: Drawer(
-          child: Container(
+                    );
+                  },
+                ),
+                //Meeting in progress widget
+                Builder(
+                  builder: (BuildContext context) {
+                    return Visibility(
+                      visible: _isMeetingInProgress,
+                      child: Positioned(
+                        bottom: 130,
+                        right:35,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.secondary,
+                            shape: BoxShape.rectangle,
+                            borderRadius: BorderRadius.circular(20.0),
+                          ),
+                          padding: const EdgeInsets.all(5),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(5),
+                                child: const Text('You\'re currently in the meeting', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                              ),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.access_time_filled,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () async => {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            MeetingScreen(place: _currentPlaceFull, contactsList: _contactsList),
+                                      ),
+                                    ),
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ]
+          ),
+          drawer: Drawer(
             child: ListView(
               padding: EdgeInsets.zero,
               children: <Widget>[

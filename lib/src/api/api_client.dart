@@ -8,6 +8,7 @@ import 'package:contacts_service/contacts_service.dart' as cs;
 import 'package:flutter_sms/flutter_sms.dart';
 import '../model/contact.dart';
 import '../model/group.dart';
+import '../model/place.dart';
 
 class ApiClient {
   //final String baseUrl;
@@ -148,6 +149,25 @@ class ApiClient {
 
   //Places
 
+  Future<List<CachableGooglePlace>> getFavouritePlaces() async {
+    String contents = await rootBundle.loadString('assets/favouritePlaces.json');
+    final jsonData = json.decode(contents) as List<dynamic>;
+
+    final List<CachableGooglePlace> places = jsonData.map((item) => CachableGooglePlace.fromJson(item)).toList();
+
+    return places;
+  }
+
+  void removeFromFavourites (List<List<dynamic>> favouritePlaces) async {
+
+  }
+
+  void addToFavourites (List<List<dynamic>> favouritePlaces) async {
+
+  }
+
+  //Old methods using local storage - remove when not needed anymore
+  /*
   Future<List<List<dynamic>>> getFavouritePlaces() async {
 
     final directory = await getApplicationDocumentsDirectory();
@@ -181,7 +201,7 @@ class ApiClient {
 
     file.writeAsString(csv);
   }
-
+*/
   //Users
 
 //Future<void> inviteUser(String groupId, String email) async {

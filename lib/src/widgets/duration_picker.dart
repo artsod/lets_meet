@@ -4,8 +4,9 @@ import 'package:numberpicker/numberpicker.dart';
 class DurationPicker extends StatefulWidget {
   final Duration initialDuration;
   final ValueChanged<Duration> onTap;
+  final bool enabled;
 
-  const DurationPicker({super.key, required this.initialDuration, required this.onTap});
+  const DurationPicker({super.key, required this.initialDuration, required this.onTap, required this.enabled});
 
   @override
   State<StatefulWidget> createState() => _DurationPickerState();
@@ -14,10 +15,11 @@ class DurationPicker extends StatefulWidget {
 class _DurationPickerState extends State<DurationPicker> {
 
   late Duration _newDuration = widget.initialDuration;
-  int _selectedHours = 0;
-  int _selectedMinutes = 0;
+  late int _selectedHours = _newDuration.inHours.remainder(24);
+  late int _selectedMinutes = _newDuration.inMinutes.remainder(60);
 
   Future<TimeOfDay?> showDurationPicker(BuildContext context) async {
+    FocusManager.instance.primaryFocus?.unfocus();
     return showDialog<TimeOfDay>(
       context: context,
       builder: (BuildContext context) {
@@ -44,7 +46,7 @@ class _DurationPickerState extends State<DurationPicker> {
                     NumberPicker(
                       value: _selectedMinutes,
                       minValue: 0,
-                      maxValue: 60,
+                      maxValue: 55,
                       step: 5,
                       selectedTextStyle: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 30),
                       itemWidth: 50,
@@ -68,12 +70,6 @@ class _DurationPickerState extends State<DurationPicker> {
               },
               child: const Text('OK'),
             ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
           ],
         );
       },
@@ -86,8 +82,6 @@ class _DurationPickerState extends State<DurationPicker> {
     setState(() {
       if (time != null) {
         _newDuration = Duration(hours: time.hour, minutes: time.minute);
-      } else {
-        _newDuration = const Duration(hours:0, minutes: 0);
       }
       widget.onTap(_newDuration);
     });
@@ -96,20 +90,18 @@ class _DurationPickerState extends State<DurationPicker> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        selectDuration(context);
-      },
+      onTap: widget.enabled ? () {selectDuration(context);} : null,
       child: Container(
         padding: const EdgeInsets.all(5),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.more_time, size: 16),
+            Icon(Icons.more_time, size: 16, color: widget.enabled ? Colors.black : Colors.grey),
             const SizedBox(width: 4),
             Text(
               '${_newDuration.inHours.remainder(24).toString().padLeft(2)}h '
               '${(_newDuration.inMinutes.remainder(60)).toString().padLeft(2)}min',
-              style: const TextStyle(fontSize: 12),
+              style: TextStyle(fontSize: 12, color: widget.enabled ? Colors.black : Colors.grey),
             ),
           ],
         ),

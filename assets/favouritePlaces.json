@@ -1,0 +1,29 @@
+[
+  {
+    "googlePlaceID": "ChIJ-eVnDB7oD0cRTobTaBciLuo",
+    "googlePlaceLatLng": {
+      "latitude": 51.10391229999999,
+      "longitude": 17.0937677
+    },
+    "ownName": "Mój plac zabaw",
+    "ownIconUrl": "assets/defaultPlaceIcon.png"
+  },
+  {
+    "googlePlaceID": "ChIJb5IwvhnpD0cRU5Q9tt99shs",
+    "googlePlaceLatLng": {
+      "latitude": 51.10983470000001,
+      "longitude": 17.0993772
+    },
+    "ownName": "Górka saneczkowa",
+    "ownIconUrl": "assets/defaultPlaceIcon.png"
+  },
+  {
+    "googlePlaceID": "ChIJu_PzNhroD0cRKWAQGjU70g4",
+    "googlePlaceLatLng": {
+      "latitude": 51.1102444,
+      "longitude": 17.1001557
+    },
+    "ownName": "Coś tam coś tam",
+    "ownIconUrl": "assets/defaultPlaceIcon.png"
+  }
+]
