@@ -80,6 +80,8 @@ class ApiClient {
 
   void removeFromContacts (List<List<dynamic>> contacts) async {
 
+
+
     String csv = const ListToCsvConverter().convert(contacts);
 
     final directory = await getApplicationDocumentsDirectory();
