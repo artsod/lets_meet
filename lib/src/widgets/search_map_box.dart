@@ -4,8 +4,9 @@ import '../api/api_client.dart';
 class SearchMapBox extends StatefulWidget {
   final String enteredKeyword;
   final String selectedPlaceType;
+  final Map<String,String> labels;
 
-  SearchMapBox({super.key, required this.enteredKeyword, required this.selectedPlaceType});
+  const SearchMapBox({super.key, required this.enteredKeyword, required this.selectedPlaceType, required this.labels});
 
   @override
   _SearchMapBoxState createState() => _SearchMapBoxState();
@@ -48,7 +49,7 @@ class _SearchMapBoxState extends State<SearchMapBox> {
               child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Keyword', style: TextStyle(fontSize: 12)),
+                    Text(widget.labels['keyword']!, style: const TextStyle(fontSize: 12)),
                     const SizedBox(width: 30),
                     Expanded(
                       child: TextField(
@@ -57,11 +58,11 @@ class _SearchMapBoxState extends State<SearchMapBox> {
                         onChanged: (value) {
                           _enteredKeyword = value;
                         },
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           fillColor: Colors.white,
                           filled: true,
-                          hintText: 'Enter a keyword',
-                          border: OutlineInputBorder(),
+                          hintText: widget.labels['enterKeyword']!,
+                          border: const OutlineInputBorder(),
                         ),
                         style: const TextStyle(fontSize: 12),
                         textAlignVertical: TextAlignVertical.bottom,
@@ -76,9 +77,9 @@ class _SearchMapBoxState extends State<SearchMapBox> {
               padding: const EdgeInsets.all(8.0),
               child: Row(
                 children: [
-                  const Text(
-                    'Place type',
-                    style: TextStyle(fontSize: 12),
+                  Text(
+                    widget.labels['placeType']!,
+                    style: const TextStyle(fontSize: 12),
                   ),
                   const SizedBox(width: 20),
                   Expanded(
@@ -101,13 +102,13 @@ class _SearchMapBoxState extends State<SearchMapBox> {
                             ),
                           );
                         }).toList(),
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           filled: true,
                           fillColor: Colors.white,
-                          hintText: 'Select a place type',
-                          hintStyle: TextStyle(fontSize: 12),
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.all(8.0),
+                          hintText: widget.labels['selectPlaceType']!,
+                          hintStyle: const TextStyle(fontSize: 12),
+                          border: const OutlineInputBorder(),
+                          contentPadding: const EdgeInsets.all(8.0),
                         ),
                       )
                   ),
@@ -124,7 +125,7 @@ class _SearchMapBoxState extends State<SearchMapBox> {
                     onPressed: () async {
                         Navigator.pop(context, [_enteredKeyword, _selectedPlaceType]);
                     },
-                    child: const Text('Search for places', style: TextStyle(fontSize: 10))
+                    child: Text(widget.labels['searchPlaces']!, style: const TextStyle(fontSize: 10))
                 ),
               ),
               const SizedBox(width: 20),
@@ -135,7 +136,7 @@ class _SearchMapBoxState extends State<SearchMapBox> {
                     onPressed: () {
                       Navigator.pop(context);
                     },
-                    child: const Text('Cancel', style: TextStyle(fontSize: 10))
+                    child: Text(widget.labels['cancel']!, style: const TextStyle(fontSize: 10))
                 ),
               ),
               const SizedBox(width: 20),

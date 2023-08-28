@@ -5,7 +5,9 @@ import '../model/group.dart';
 
 class ContactsManagement extends StatefulWidget {
 
-  const ContactsManagement({super.key});
+  final Map<String,String> labels;
+
+  const ContactsManagement({super.key, required this.labels});
 
   @override
   _ContactsManagementState createState() => _ContactsManagementState();
@@ -47,7 +49,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Contacts and groups'),
+        title: Text(widget.labels['contactsGroups']!),
       ),
       body: Column(
         children: [
@@ -63,10 +65,10 @@ class _ContactsManagementState extends State<ContactsManagement> {
                   child: Container(
                     color: _showContacts ? Theme.of(context).colorScheme.primary : Colors.grey,
                     padding: const EdgeInsets.all(8.0),
-                    child: const Text(
-                      'Contacts',
+                    child: Text(
+                      widget.labels['contacts']!,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
@@ -84,10 +86,10 @@ class _ContactsManagementState extends State<ContactsManagement> {
                   child: Container(
                     color: !_showContacts ? Theme.of(context).colorScheme.primary : Colors.grey,
                     padding: const EdgeInsets.all(8.0),
-                    child: const Text(
-                      'Groups',
+                    child: Text(
+                      widget.labels['groups']!,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
@@ -116,8 +118,8 @@ class _ContactsManagementState extends State<ContactsManagement> {
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
-                _buildContactGroup('People using MeetMeThere', registeredContacts),
-                _buildContactGroup('Invite to MeetMeThere', unregisteredContacts),
+                _buildContactGroup(widget.labels['peopleUsingApp']!, registeredContacts),
+                _buildContactGroup(widget.labels['inviteToApp']!, unregisteredContacts),
               ],
             ),
           ),
@@ -167,21 +169,20 @@ class _ContactsManagementState extends State<ContactsManagement> {
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
-                              title: const Text('Confirm'),
-                              content: const Text('This action will create an invitation text message ready to be sent. Do you want to continue?'),
+                              title: Text(widget.labels['confirm']!),
+                              content: Text(widget.labels['sendInvitationText']!),
                               actions: [
                                 TextButton(
-                                  child: const Text('Cancel',
-                                      style: TextStyle(color: Colors.grey)),
+                                  child: Text(widget.labels['cancel']!,style: const TextStyle(color: Colors.grey)),
                                   onPressed: () {
                                     Navigator.of(context).pop();
                                   },
                                 ),
                                 TextButton(
-                                  child: const Text('Continue'),
+                                  child: Text(widget.labels['continue']!),
                                   onPressed: () {
                                     //##Tutaj wstawić logikę wysyłania zaproszenia w back-endzie
-                                    _apiClient.sendInvitation('Hi! Check out MeetMeThere app where you can easily notify your friends where they can meet you. Here\'s the link: TUTAJ LINK', [contacts[index].phoneNumber]);
+                                    _apiClient.sendInvitation(widget.labels['invitationText']!, [contacts[index].phoneNumber]);
                                     setState(() {
 
                                     });
@@ -202,19 +203,18 @@ class _ContactsManagementState extends State<ContactsManagement> {
                         context: context,
                         builder: (BuildContext context) {
                           return AlertDialog(
-                            title: const Text('Confirm'),
-                            content: const Text('Are you sure you want to remove this contact?'),
+                            title: Text(widget.labels['confirm']!),
+                            content: Text(widget.labels['sureToRemoveContact']!),
                             actions: [
                               TextButton(
-                                child: const Text('Cancel',
-                                    style: TextStyle(color: Colors.grey)),
+                                child: Text(widget.labels['cancel']!,
+                                    style: const TextStyle(color: Colors.grey)),
                                 onPressed: () {
                                   Navigator.of(context).pop();
                                 },
                               ),
                               TextButton(
-                                child: const Text('Remove',
-                                    style: TextStyle(color: Colors.red)),
+                                child: Text(widget.labels['remove']!, style: const TextStyle(color: Colors.red)),
                                 onPressed: () {
                                   //##Tutaj wstawić logikę usuwania kontaktu w back-endzie
                                   //groups.removeGroup();
@@ -248,9 +248,9 @@ class _ContactsManagementState extends State<ContactsManagement> {
           Expanded(
             child: ListView(
               children: [
-                _buildGroupTypeList('My Private Groups', _groupsList.where((group) => group.type == 'MyPrivate').toList()),
-                _buildGroupTypeList('My Public Groups', _groupsList.where((group) => group.type == 'MyPublic').toList()),
-                _buildGroupTypeList('Other Public Groups', _groupsList.where((group) => group.type == 'OtherPublic').toList()),
+                _buildGroupTypeList(widget.labels['myPrivateGroups']!, _groupsList.where((group) => group.type == 'MyPrivate').toList()),
+                _buildGroupTypeList(widget.labels['myPublicGroups']!, _groupsList.where((group) => group.type == 'MyPublic').toList()),
+                _buildGroupTypeList(widget.labels['otherPublicGroups']!, _groupsList.where((group) => group.type == 'OtherPublic').toList()),
               ],
             ),
           ),
@@ -262,13 +262,13 @@ class _ContactsManagementState extends State<ContactsManagement> {
                     context: context,
                     builder: (BuildContext context) {
                       String groupName = '';
-                      String groupType = 'Private';
+                      String groupType = widget.labels['private']!;
                       Group newGroup;
                       return StatefulBuilder(
                           builder: (context, setState)
                           {
                             return AlertDialog(
-                              title: const Text('Create Group'),
+                              title: Text(widget.labels['createGroup']!),
                               content: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -278,13 +278,13 @@ class _ContactsManagementState extends State<ContactsManagement> {
                                         groupName = value;
                                       });
                                     },
-                                    decoration: const InputDecoration(labelText: 'Group Name'),
+                                    decoration: InputDecoration(labelText: widget.labels['groupName']),
                                   ),
                                   const SizedBox(height: 16),
                                   Row(
                                     children: [
                                       Radio<String>(
-                                        value: 'Private',
+                                        value: widget.labels['private']!,
                                         groupValue: groupType,
                                         onChanged: (value) {
                                           setState(() {
@@ -292,9 +292,9 @@ class _ContactsManagementState extends State<ContactsManagement> {
                                           });
                                         },
                                       ),
-                                      const Text('Private'),
+                                      Text(widget.labels['private']!),
                                       Radio<String>(
-                                        value: 'Public',
+                                        value: widget.labels['public']!,
                                         groupValue: groupType,
                                         onChanged: (value) {
                                           setState(() {
@@ -302,24 +302,24 @@ class _ContactsManagementState extends State<ContactsManagement> {
                                           });
                                         },
                                       ),
-                                      const Text('Public'),
+                                      Text(widget.labels['public']!),
                                     ],
                                   ),
                                 ],
                               ),
                               actions: [
                                 TextButton(
-                                  child: const Text('Cancel',
-                                      style: TextStyle(color: Colors.grey)),
+                                  child: Text(widget.labels['cancel']!,
+                                      style: const TextStyle(color: Colors.grey)),
                                   onPressed: () {
                                     Navigator.of(context).pop(); // Close the dialog
                                   },
                                 ),
                                 TextButton(
-                                  child: const Text('Create'),
+                                  child: Text(widget.labels['create']!),
                                   onPressed: () {
                                     if (groupName.isNotEmpty) {
-                                      if (groupType == 'Private') {
+                                      if (groupType == widget.labels['private']) {
                                         newGroup = Group(name: groupName, type: 'MyPrivate');
                                       } else {
                                         newGroup = Group(name: groupName, type: 'MyPublic');
@@ -342,7 +342,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
                     });
                   }
                 },
-                child: const Text('Create group')
+                child: Text(widget.labels['createGroup']!)
             ),
           ),
         ],
@@ -366,11 +366,11 @@ class _ContactsManagementState extends State<ContactsManagement> {
           ),
         ),
         if (group.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(8.0),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
             child: Text(
-              'There are no groups here',
-              style: TextStyle(color: Colors.grey),
+              widget.labels['noGroups']!,
+              style: const TextStyle(color: Colors.grey),
             ),
           )
         else
@@ -394,19 +394,19 @@ class _ContactsManagementState extends State<ContactsManagement> {
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
-                              title: const Text('Confirm'),
-                              content: const Text('Are you sure you want to remove this group?'),
+                              title: Text(widget.labels['confirm']!),
+                              content: Text(widget.labels['sureToRemoveGroup']!),
                               actions: [
                                 TextButton(
-                                  child: const Text('Cancel',
-                                      style: TextStyle(color: Colors.grey)),
+                                  child: Text(widget.labels['cancel']!,
+                                      style: const TextStyle(color: Colors.grey)),
                                   onPressed: () {
                                     Navigator.of(context).pop();
                                   },
                                 ),
                                 TextButton(
-                                  child: const Text('Remove',
-                                      style: TextStyle(color: Colors.red)),
+                                  child: Text(widget.labels['remove']!,
+                                      style: const TextStyle(color: Colors.red)),
                                   onPressed: () {
                                     //##Tutaj wstawić logikę usuwania grupy w back-endzie
                                     _apiClient.removeGroup();
@@ -428,7 +428,7 @@ class _ContactsManagementState extends State<ContactsManagement> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => GroupContactsScreen(groupList: _groupsList, renameGroup: renameGroup, index: index, contactsList: _contactsList),
+                      builder: (context) => GroupContactsScreen(groupList: _groupsList, renameGroup: renameGroup, index: index, contactsList: _contactsList, labels: widget.labels),
                     ),
                   );
                 },
@@ -445,8 +445,9 @@ class GroupContactsScreen extends StatefulWidget {
   final Function(List<Group>) renameGroup;
   final int index;
   final List<Contact> contactsList;
+  final Map<String,String> labels;
 
-  const GroupContactsScreen({super.key, required this.groupList, required this.renameGroup, required this.index, required this.contactsList});
+  const GroupContactsScreen({super.key, required this.groupList, required this.renameGroup, required this.index, required this.contactsList, required this.labels});
 
   @override
   _GroupContactsScreenState createState() => _GroupContactsScreenState();
@@ -478,7 +479,7 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
     List<Contact>? selectedContacts = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddContactsListScreen(contactsList: _contactsList, contactsToExclude: contactsInGroup),
+        builder: (context) => AddContactsListScreen(contactsList: _contactsList, contactsToExclude: contactsInGroup, labels: widget.labels),
       ),
     );
 
@@ -505,24 +506,24 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
                 builder: (BuildContext context) {
                   String? userInput;
                   return AlertDialog(
-                    title: const Text('Enter new name'),
+                    title: Text(widget.labels['enterNewName']!),
                     content: TextField(
                       controller: TextEditingController(text: widget.groupList[widget.index].name),
-                      decoration: const InputDecoration(labelText: 'Group Name'),
+                      decoration: InputDecoration(labelText: widget.labels['groupName']!),
                       onChanged: (value) {
                         userInput = value;
                       },
                     ),
                     actions: [
                       TextButton(
-                        child: const Text('Cancel',
-                            style: TextStyle(color: Colors.grey)),
+                        child: Text(widget.labels['cancel']!,
+                            style: const TextStyle(color: Colors.grey)),
                         onPressed: () {
                           Navigator.of(context).pop();
                         },
                       ),
                       TextButton(
-                        child: const Text('Rename'),
+                        child: Text(widget.labels['rename']!),
                         onPressed: () {
                           Navigator.of(context).pop(userInput);
                         },
@@ -547,13 +548,13 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
         children: [
           //If the list is empty, show message
           if (_groupContactsList.isEmpty)
-            const Expanded(
+            Expanded(
               child: Padding(
-                padding: EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(8.0),
                 child: Center(
                   child: Text(
-                    'There are no contacts in this group',
-                    style: TextStyle(color: Colors.grey),
+                    widget.labels['noContactsInGroup']!,
+                    style: const TextStyle(color: Colors.grey),
                   ),
                 ),
               ),
@@ -588,7 +589,7 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
             onPressed: () {
               _navigateToAddContacts(_groupContactsList);
             },
-            child: const Text('Add people'),
+            child: Text(widget.labels['addPeople']!),
           ),
         ],
       ),
@@ -599,7 +600,9 @@ class _GroupContactsScreenState extends State<GroupContactsScreen> {
 class AddContactsListScreen extends StatefulWidget {
   final List<Contact> contactsList;
   final List<Contact> contactsToExclude;
-  const AddContactsListScreen({super.key, required this.contactsList, required this.contactsToExclude});
+  final Map<String,String> labels;
+
+  const AddContactsListScreen({super.key, required this.contactsList, required this.contactsToExclude, required this.labels});
 
   @override
   _AddContactsListScreenState createState() => _AddContactsListScreenState();
@@ -633,7 +636,7 @@ class _AddContactsListScreenState extends State<AddContactsListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Contacts List'),
+        title: Text(widget.labels['contactsList']!),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -642,8 +645,8 @@ class _AddContactsListScreenState extends State<AddContactsListScreen> {
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
-                _buildAddContactsGroup('People using MeetMeThere', _addableContactsList, true),
-                _buildAddContactsGroup('Invite to MeetMeThere', _nonAddableContactsList, false),
+                _buildAddContactsGroup(widget.labels['peopleUsingApp']!, _addableContactsList, true),
+                _buildAddContactsGroup(widget.labels['inviteToApp']!, _nonAddableContactsList, false),
               ],
             ),
           ),
@@ -653,7 +656,7 @@ class _AddContactsListScreenState extends State<AddContactsListScreen> {
               onPressed: () {
                 Navigator.pop(context, _selectedContacts);
               },
-              child: const Text('Add Selected Contacts'),
+              child: Text(widget.labels['addSelectedContacts']!),
             ),
           ),
         ],
@@ -728,24 +731,21 @@ class _AddContactsListScreenState extends State<AddContactsListScreen> {
                             context: context,
                             builder: (BuildContext context) {
                               return AlertDialog(
-                                title: const Text('Confirm'),
-                                content: const Text(
-                                    'This action will create an invitation text message ready to be sent. Do you want to continue?'),
+                                title: Text(widget.labels['confirm']!),
+                                content: Text(widget.labels['sendInvitationText']!),
                                 actions: [
                                   TextButton(
-                                    child: const Text('Cancel',
-                                        style: TextStyle(color: Colors.grey)),
+                                    child: Text(widget.labels['cancel']!,
+                                        style: const TextStyle(color: Colors.grey)),
                                     onPressed: () {
                                       Navigator.of(context).pop();
                                     },
                                   ),
                                   TextButton(
-                                    child: const Text('Continue'),
+                                    child: Text(widget.labels['continue']!),
                                     onPressed: () {
                                       //##Tutaj wstawić logikę wysyłania zaproszenia w back-endzie
-                                      _apiClient.sendInvitation(
-                                          'Hi! Check out MeetMeThere app where you can easily notify your friends where they can meet you. Here\'s the link: TUTAJ LINK',
-                                          [contacts[index].phoneNumber]);
+                                      _apiClient.sendInvitation(widget.labels['invitationText']!, [contacts[index].phoneNumber]);
                                       setState(() {
 
                                       });
@@ -772,7 +772,9 @@ class _AddContactsListScreenState extends State<AddContactsListScreen> {
 class AddGroupsListScreen extends StatefulWidget {
   final List<Group> groupsList;
   final List<Group> groupsToExclude;
-  const AddGroupsListScreen({super.key, required this.groupsList, required this.groupsToExclude});
+  final Map<String,String> labels;
+
+  const AddGroupsListScreen({super.key, required this.groupsList, required this.groupsToExclude, required this.labels});
 
   @override
   _AddGroupsListScreenState createState() => _AddGroupsListScreenState();
@@ -800,7 +802,7 @@ class _AddGroupsListScreenState extends State<AddGroupsListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Groups List'),
+        title: Text(widget.labels['groupsList']!),
       ),
       body: Column(
         children: [
@@ -831,7 +833,7 @@ class _AddGroupsListScreenState extends State<AddGroupsListScreen> {
             onPressed: () {
               Navigator.pop(context, _selectedGroups);
             },
-            child: const Text('Add Selected Groups'),
+            child: Text(widget.labels['addSelectedGroups']!),
           ),
         ],
       ),

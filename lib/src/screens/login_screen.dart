@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import '../model/contact.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final Contact currentUser;
+  final Map<String,String> labels;
+
+  const LoginScreen({super.key, required this.currentUser, required this.labels});
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -12,7 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _verificationCodeController = TextEditingController();
 
-  String _selectedLanguage = 'English';
+  late String _selectedLanguage = widget.currentUser.language.name;
   bool _termsAccepted = false;
 
   void _verifyPhoneNumber(BuildContext context) {
@@ -33,8 +37,8 @@ class _LoginScreenState extends State<LoginScreen> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text('Verification Failed'),
-            content: const Text('Please enter a valid verification code.'),
+            title: Text(widget.labels['verificationFailed']!),
+            content: Text(widget.labels['enterValidCode']!),
             actions: <Widget>[
               TextButton(
                 child: const Text('OK'),
@@ -54,19 +58,19 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Verification Code'),
+          title: Text(widget.labels['verificationCode']!),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const Text('Please enter the 6-digit verification code:'),
+              Text(widget.labels['enterVerificationCode']!),
               const SizedBox(height: 16.0),
               TextFormField(
                 autofocus: true,
                 controller: _verificationCodeController,
                 keyboardType: TextInputType.number,
                 maxLength: 6,
-                decoration: const InputDecoration(
-                  labelText: 'Verification Code',
+                decoration: InputDecoration(
+                  labelText: widget.labels['verificationCode'],
                 ),
               ),
             ],
@@ -90,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Login Page'),
+        title: Text(widget.labels['loginPageTitle']!),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -101,12 +105,12 @@ class _LoginScreenState extends State<LoginScreen> {
               TextFormField(
                 controller: _phoneNumberController,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number',
+                decoration: InputDecoration(
+                  labelText: widget.labels['phoneNumber'],
                 ),
                 validator: (String? value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter phone number';
+                    return widget.labels['enterPhoneNumber'];
                   }
                   return null;
                 },
@@ -114,10 +118,10 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 16.0),
               DropdownButtonFormField<String>(
                 value: _selectedLanguage,
-                decoration: const InputDecoration(
-                  labelText: 'Language',
+                decoration: InputDecoration(
+                  labelText: widget.labels['languageLabel'],
                 ),
-                items: <String>['English', 'Polish'].map<DropdownMenuItem<String>>((String value) {
+                items: <String>['English', 'Polski'].map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
                     child: Text(value),
@@ -130,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 },
                 validator: (String? value) {
                   if (value == null) {
-                    return 'Please select a language';
+                    return widget.labels['selectLanguage'];
                   }
                   return null;
                 },
@@ -146,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       });
                     },
                   ),
-                  const Text('I accept the terms and conditions'),
+                  Text(widget.labels['termsConditionsConfirmation']!),
                 ],
               ),
               const SizedBox(height: 16.0),
@@ -157,9 +161,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
-                          title: const Text('Terms and Conditions'),
-                          content: const Text(
-                              'Please accept the terms and conditions.'),
+                          title: Text(widget.labels['termsConditionsLabel']!),
+                          content: Text(widget.labels['acceptTermsConditions']!),
                           actions: <Widget>[
                             TextButton(
                               child: const Text('OK'),
@@ -175,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     _showVerificationDialog(context);
                   }
                 },
-                child: const Text('Verify Phone Number'),
+                child: Text(widget.labels['verifyNumber']!),
               ),
             ],
           ),

@@ -7,17 +7,18 @@ import '../model/contact.dart';
 import '../model/group.dart';
 import '../model/meeting.dart';
 import '../model/place.dart';
+import '../model/enums.dart';
 import '../api/api_client.dart';
-
-enum ActionOnButton {New,Update,Cancel,End,Join,Decline,None}
 
 class MeetingScreen extends StatefulWidget {
   final NonCachableGooglePlace place;
   final Meeting? meeting;
+  final Map<String,String> labels;
 
   const MeetingScreen({
     super.key,
     required this.place,
+    required this.labels,
     this.meeting
   });
 
@@ -76,12 +77,12 @@ class _MeetingScreenState extends State<MeetingScreen> {
     );
     if (widget.meeting == null) {
       _status = Status.New;
-      _screenTitle = 'Let\'s meet here';
+      _screenTitle = widget.labels['letsMeetHere']!;
       _ownerID = '111'; //currentUserID; ##jak to zrobić? Na razie fake na potrzeby testów
-      _firstButtonText ='Let\'s meet here later';
-      _dateTimeText = 'When will you be here?';
-      _durationText = 'How long do you plan to be here?';
-      _participantsText = 'Who do you invite?';
+      _firstButtonText = widget.labels['letsMeetHereLater']!;
+      _dateTimeText = widget.labels['whenWillYouBeHere']!;
+      _durationText = widget.labels['howLongWillYouBeHere']!;
+      _participantsText = widget.labels['whoYouInvite']!;
       _firstButtonAction = ActionOnButton.New;
     } else {
       _status = widget.meeting!.status;
@@ -89,23 +90,23 @@ class _MeetingScreenState extends State<MeetingScreen> {
       if (_ownerID == '111') { //##tu ma być currentUserID - jak to zrobić?
         switch (_status) {
           case Status.Scheduled:
-            _screenTitle = 'This meeting is scheduled';
-            _firstButtonText = 'Update meeting';
-            _dateTimeText = 'Meeting is planned at:';
-            _durationText = 'How long do you plan to be here?';
-            _participantsText = 'Who do you invite?';
-            _secondButtonText = 'Cancel meeting';
+            _screenTitle = widget.labels['meetingIsScheduled']!;
+            _firstButtonText = widget.labels['updateMeeting']!;
+            _dateTimeText = widget.labels['meetingPlannedAt']!;
+            _durationText = widget.labels['howLongWillYouBeHere']!;
+            _participantsText = widget.labels['whoYouInvite']!;
+            _secondButtonText = widget.labels['cancelMeeting']!;
             _showSecondButton = true;
             _firstButtonAction = ActionOnButton.Update;
             _secondButtonAction = ActionOnButton.Cancel;
             break;
           case Status.Started:
-            _screenTitle = 'This meeting is in progress';
-            _firstButtonText = 'Update meeting';
-            _dateTimeText = 'Meeting has started at:';
-            _durationText = 'Meeting is planned for:';
-            _participantsText = 'You invited:';
-            _secondButtonText = 'End meeting';
+            _screenTitle = widget.labels['meetingInProgress']!;
+            _firstButtonText = widget.labels['updateMeeting']!;
+            _dateTimeText = widget.labels['meetingStartedAt']!;
+            _durationText = widget.labels['meetingPlannedFor']!;
+            _participantsText = widget.labels['youInvited']!;
+            _secondButtonText = widget.labels['endMeeting']!;
             _showStartNowSwitch = false;
             _startDateTimeEnabled = false;
             _showSecondButton = true;
@@ -113,11 +114,11 @@ class _MeetingScreenState extends State<MeetingScreen> {
             _secondButtonAction = ActionOnButton.End;
             break;
           case Status.Finished:
-            _screenTitle = 'This meeting has already finished';
-            _firstButtonText = 'Do nothing :)';
-            _dateTimeText = 'Meeting has started at:';
-            _durationText = 'Meeting was planned for:';
-            _participantsText = 'You invited:';
+            _screenTitle = widget.labels['meetingFinished']!;
+            _firstButtonText = widget.labels['doNothing']!;
+            _dateTimeText = widget.labels['meetingStartedAt']!;
+            _durationText = widget.labels['meetingWasPlannedFor']!;
+            _participantsText = widget.labels['youInvited']!;
             _showStartNowSwitch = false;
             _startDateTimeEnabled = false;
             _durationEnabled = false;
@@ -126,11 +127,11 @@ class _MeetingScreenState extends State<MeetingScreen> {
             _firstButtonAction = ActionOnButton.None;
             break;
           default:
-            _screenTitle = 'This meeting is in unknown state';
-            _firstButtonText = 'Do nothing :)';
-            _dateTimeText = 'Meeting is planned at:';
-            _durationText = 'Meeting was planned for:';
-            _participantsText = 'You invited:';
+            _screenTitle = widget.labels['meetingUnknownState']!;
+            _firstButtonText = widget.labels['doNothing']!;
+            _dateTimeText = widget.labels['meetingPlannedAt']!;
+            _durationText = widget.labels['meetingWasPlannedFor']!;
+            _participantsText = widget.labels['youInvited']!;
             _showStartNowSwitch = false;
             _startDateTimeEnabled = false;
             _durationEnabled = false;
@@ -140,11 +141,11 @@ class _MeetingScreenState extends State<MeetingScreen> {
             break;
         }
       } else {
-        _firstButtonText = 'Join meeting';
-        _dateTimeText = 'Meeting is planned at:';
-        _durationText = 'Meeting is planned for:';
-        _participantsText = 'People and groups invited:';
-        _secondButtonText = 'Decline meeting';
+        _firstButtonText = widget.labels['joinMeeting']!;
+        _dateTimeText = widget.labels['meetingPlannedAt']!;
+        _durationText = widget.labels['meetingPlannedFor']!;
+        _participantsText = widget.labels['peopleGroupsInvited']!;
+        _secondButtonText = widget.labels['declineMeeting']!;
         _showStartNowSwitch = false;
         _startDateTimeEnabled = false;
         _durationEnabled = false;
@@ -157,11 +158,11 @@ class _MeetingScreenState extends State<MeetingScreen> {
     }
   }
 
-  void _initializaContacts() async {
+  Future<void> _initializeContacts() async {
     _contactsList = await ApiClient().getContactsLocal();
   }
 
-  void _initializeGroups() async {
+  Future<void> _initializeGroups() async {
     _groupsList = await ApiClient().getGroups();
   }
 
@@ -169,7 +170,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
     List<Contact>? selectedContacts = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddContactsListScreen(contactsList: _contactsList, contactsToExclude: _participantsContacts),
+        builder: (context) => AddContactsListScreen(contactsList: _contactsList, contactsToExclude: _participantsContacts, labels: widget.labels),
       ),
     );
 
@@ -186,7 +187,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
     List<Group>? selectedGroups = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddGroupsListScreen(groupsList: _groupsList, groupsToExclude: _participantsGroups),
+        builder: (context) => AddGroupsListScreen(groupsList: _groupsList, groupsToExclude: _participantsGroups, labels: widget.labels),
       ),
     );
 
@@ -197,6 +198,18 @@ class _MeetingScreenState extends State<MeetingScreen> {
         _participantsGroups.addAll(selectedGroups);
       });
     }
+  }
+
+  _addPeopleToMeeting() async {
+    _textFieldFocusNode.unfocus();
+    await _initializeContacts();
+    _navigateToAddContacts();
+  }
+
+  _addGroupsToMeeting () async {
+    _textFieldFocusNode.unfocus();
+    await _initializeGroups();
+    _navigateToAddGroups();
   }
 
   @override
@@ -235,7 +248,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Start meeting now?',
+            widget.labels['startMeetingNow']!,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w400,
@@ -256,9 +269,9 @@ class _MeetingScreenState extends State<MeetingScreen> {
               setState(() {
                 _startNow = value;
                 if (value == true) {
-                  _firstButtonText = 'Let\'s meet here now';
+                  _firstButtonText = widget.labels['letsMeetHereNow']!;
                 } else {
-                  _firstButtonText = 'Let\'s meet here later';
+                  _firstButtonText = widget.labels['letsMeetHereLater']!;
                 }
               });
             },
@@ -312,6 +325,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
         DurationPicker(
           initialDuration: _duration,
           enabled: _durationEnabled,
+          labels: widget.labels,
           onTap: (newDuration) {
             setState(() {
               _duration = newDuration;
@@ -342,8 +356,8 @@ class _MeetingScreenState extends State<MeetingScreen> {
                           minimumSize: MaterialStateProperty.all<Size>(const Size(70, 25)),
                           backgroundColor: _addParticipantsEnabled ? Theme.of(context).elevatedButtonTheme.style!.backgroundColor : MaterialStateProperty.all<Color>(Colors.grey),
                         ),
-                        onPressed: _addParticipantsEnabled ? () {_textFieldFocusNode.unfocus(); _initializaContacts(); _navigateToAddContacts();} : null,
-                        child: const Text('Add people', style: TextStyle(fontSize: 10))
+                        onPressed: _addParticipantsEnabled ? _addPeopleToMeeting : null,
+                        child: Text(widget.labels['addPeople']!, style: const TextStyle(fontSize: 10))
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
@@ -352,18 +366,18 @@ class _MeetingScreenState extends State<MeetingScreen> {
                           minimumSize: MaterialStateProperty.all<Size>(const Size(70, 25)),
                           backgroundColor: _addParticipantsEnabled ? Theme.of(context).elevatedButtonTheme.style!.backgroundColor : MaterialStateProperty.all<Color>(Colors.grey),
                         ),
-                        onPressed: _addParticipantsEnabled ? () {_textFieldFocusNode.unfocus(); _initializeGroups(); _navigateToAddGroups();} : null,
-                        child: const Text('Add groups', style: TextStyle(fontSize: 10))
+                        onPressed: _addParticipantsEnabled ? _addGroupsToMeeting : null,
+                        child: Text(widget.labels['addGroups']!, style: const TextStyle(fontSize: 10))
                     ),
                   ]),
             ]
         ),
         if ((_participantsContacts.isEmpty && _participantsGroups.isEmpty))
-          const Padding(
-            padding: EdgeInsets.all(8.0),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
             child: Text(
-              'No one is invited',
-              style: TextStyle(color: Colors.grey),
+              widget.labels['noOneInvited']!,
+              style: const TextStyle(color: Colors.grey),
             ),
           ),
         Row(
@@ -383,7 +397,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Meeting comments: ',
+          widget.labels['meetingComments']!,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w400,
@@ -463,7 +477,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
             ElevatedButton(
                 style: ButtonStyle(backgroundColor: MaterialStateProperty.all<Color>(Colors.grey)),
                 onPressed: () {Navigator.pop(context);},
-                child: const Text('Back', style: TextStyle(fontSize: 10))
+                child: Text(widget.labels['cancel']!, style: const TextStyle(fontSize: 10))
             ),
           ),
           const SizedBox(width: 20),
