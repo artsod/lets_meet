@@ -227,6 +227,7 @@ class _MapScreenState extends State<MapScreen> {
       builder: (BuildContext context) {
         return FavouritesList(
             favouritesList: _favouritePlacesList,
+            labels: widget.labels,
             onTap: _onFavouritePlaceTap,
             onRemove: () {
               setState(() {
@@ -246,6 +247,7 @@ class _MapScreenState extends State<MapScreen> {
         return SearchMapBox(
           enteredKeyword: _enteredKeyword,
           selectedPlaceType: _selectedPlaceType,
+          labels: widget.labels,
         );
       },
     );

@@ -5,9 +5,10 @@ class FavouritesList extends StatefulWidget {
   final List<CachableGooglePlace> favouritesList;
   final Function(CachableGooglePlace) onTap;
   final Function() onRemove;
+  final Map<String,String> labels;
 
 
-  const FavouritesList({super.key, required this.favouritesList, required this.onTap, required this.onRemove});
+  const FavouritesList({super.key, required this.favouritesList, required this.onTap, required this.onRemove, required this.labels});
 
   @override
   _FavouritesListState createState() => _FavouritesListState();
@@ -59,8 +60,7 @@ class _FavouritesListState extends State<FavouritesList> {
                               removeFromFavourites(favouritesList[index].googlePlaceID);
                             });
                           },
-                          child: const Text('Remove',
-                              style: TextStyle(fontSize: 10))
+                          child: Text(widget.labels['remove']!, style: const TextStyle(fontSize: 10))
                       ),
                       const SizedBox(
                         width: 10,
@@ -71,9 +71,9 @@ class _FavouritesListState extends State<FavouritesList> {
               }
           ),
         if (favouritesList.isEmpty)
-          const Text(
-              'You don\'t have any favourite places. Click on the map on a place and add it to favourites to show it here.',
-              style: TextStyle(color: Colors.grey, height: 2),
+          Text(
+              widget.labels['youDontHaveFavourites']!,
+              style: const TextStyle(color: Colors.grey, height: 2),
               textAlign: TextAlign.center,
           ),
         Row(
@@ -86,8 +86,7 @@ class _FavouritesListState extends State<FavouritesList> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text(
-                      'Back', style: TextStyle(fontSize: 10))
+                  child: Text(widget.labels['cancel']!, style: const TextStyle(fontSize: 10))
               ),
             ),
             const SizedBox(width: 20),

@@ -5,8 +5,9 @@ class DurationPicker extends StatefulWidget {
   final Duration initialDuration;
   final ValueChanged<Duration> onTap;
   final bool enabled;
+  final Map<String,String> labels;
 
-  const DurationPicker({super.key, required this.initialDuration, required this.onTap, required this.enabled});
+  const DurationPicker({super.key, required this.initialDuration, required this.onTap, required this.enabled, required this.labels});
 
   @override
   State<StatefulWidget> createState() => _DurationPickerState();
@@ -24,7 +25,7 @@ class _DurationPickerState extends State<DurationPicker> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Meeting duration'),
+          title: Text(widget.labels['meetingDuration']!),
           content: StatefulBuilder(
               builder: (context, SBsetState) {
                 return Row(
@@ -68,7 +69,7 @@ class _DurationPickerState extends State<DurationPicker> {
                   minute: _selectedMinutes,
                 ));
               },
-              child: const Text('OK'),
+              child: Text(widget.labels['ok']!),
             ),
           ],
         );

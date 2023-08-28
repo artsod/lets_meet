@@ -71,8 +71,8 @@ class _BottomPlaceMenuState extends State<BottomPlaceMenu> {
                     ),
                   );
                 },
-                child: const Text(
-                    'Let\'s meet here', style: TextStyle(fontSize: 10)),
+                child: Text(
+                    widget.labels['letsMeetHere']!, style: const TextStyle(fontSize: 10), textAlign: TextAlign.center),
               ),
             ),
             const SizedBox(width: 20),
@@ -93,8 +93,8 @@ class _BottomPlaceMenuState extends State<BottomPlaceMenu> {
 
  */
                   },
-                  child: const Text(
-                      'Add to favourites', style: TextStyle(fontSize: 10), textAlign: TextAlign.center)
+                  child: Text(
+                      widget.labels['addToFavourites']!, style: const TextStyle(fontSize: 10), textAlign: TextAlign.center)
               ),
             ),
             const SizedBox(width: 20),
@@ -107,8 +107,8 @@ class _BottomPlaceMenuState extends State<BottomPlaceMenu> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text(
-                      'Cancel', style: TextStyle(fontSize: 10))
+                  child: Text(
+                      widget.labels['cancel']!, style: const TextStyle(fontSize: 10))
               ),
             ),
             const SizedBox(width: 20),
