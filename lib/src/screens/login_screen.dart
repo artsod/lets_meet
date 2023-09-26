@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:country_code_picker/country_code_picker.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -11,6 +11,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _verificationCodeController = TextEditingController();
+  CountryCode selectedCountry = CountryCode.fromCountryCode('PL');
+
 
   String _selectedLanguage = 'English';
   bool _termsAccepted = false;
@@ -90,54 +92,92 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Login Page'),
+        title: Text('Phone Login'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             children: <Widget>[
-              TextFormField(
-                controller: _phoneNumberController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number',
-                ),
-                validator: (String? value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter phone number';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16.0),
-              DropdownButtonFormField<String>(
-                value: _selectedLanguage,
-                decoration: const InputDecoration(
-                  labelText: 'Language',
-                ),
-                items: <String>['English', 'Polish'].map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedLanguage = newValue!;
-                  });
-                },
-                validator: (String? value) {
-                  if (value == null) {
-                    return 'Please select a language';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16.0),
               Row(
                 children: <Widget>[
+                  CountryCodePicker(
+                    onChanged: (countryCode) {
+                      setState(() {
+                        selectedCountry = countryCode;
+                      });
+                    },
+                    initialSelection: 'PL',
+                    showCountryOnly:
+                        false, // Set to true to show only country names
+                    showOnlyCountryWhenClosed:
+                        false, // Set to true to show only country names when closed
+                    alignLeft: false, // Set to true for left alignment
+                  ),
+                  const SizedBox(width: 10.0),
+                  Expanded(
+                    child: SizedBox(
+                      width: 200,
+                      child: TextFormField(
+                        controller: _phoneNumberController,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(
+                          labelText: 'Phone Number',
+                        ),
+                        validator: (String? value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter phone number';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: () {
+                  // Implement phone number authentication logic here
+                  // You can access the selected country and phone number using selectedCountry and phoneNumberController.text
+                },
+                child: Text('Login with Phone Number'),
+              ),
+              SizedBox(height: 16.0),
+              Row(
+                children: <Widget>[
+                  SizedBox(
+                    width: 400,
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedLanguage,
+                      decoration: const InputDecoration(
+                        labelText: 'Language',
+                      ),
+                      items: <String>['English', 'Polish']
+                          .map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedLanguage = newValue!;
+                        });
+                      },
+                      validator: (String? value) {
+                        if (value == null) {
+                          return 'Please select a language';
+                        }
+                        return null;
+                      },
+                    ),
+                  ), 
+                ],
+              ),
+              Row(
+                children: <Widget>[
+                  const SizedBox(height: 16.0),
                   Checkbox(
                     value: _termsAccepted,
                     onChanged: (bool? newValue) {
